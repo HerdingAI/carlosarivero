@@ -1,0 +1,6 @@
+/* Signal / Noise — shared base styles */
+body{margin:0;background:#faf9f6;color:#1a1a1a}
+a{color:#b4552d}
+a:hover{color:#8f3f1e}
+.icon-link{color:#5c5c5c;display:flex}
+.icon-link:hover{color:#b4552d}

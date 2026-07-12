@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 01 — What AI Engineering Is (and Isn't) — Signal / Noise</title>
+<meta name="description" content="How building on foundation models differs from classic ML and full-stack engineering — and which layer of the AI stack your team actually operates on.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{
+    font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700;
+    letter-spacing:-.01em;
+  }
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  a:hover{border-bottom-color:var(--accent)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  /* meta card */
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+  .src{font-size:14px; color:#444}
+  .src code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  /* callouts */
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  /* stack diagram */
+  .stack{margin:26px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .layer{border:1px solid var(--line); border-radius:12px; padding:15px 18px; margin:10px 0;
+    background:var(--card); position:relative; overflow:hidden}
+  .layer:before{content:""; position:absolute; left:0; top:0; bottom:0; width:6px}
+  .layer.app:before{background:#b4552d}
+  .layer.mod:before{background:#c99a3b}
+  .layer.inf:before{background:#5c7a99}
+  .layer h4{margin:0 0 3px; font-size:1.05rem; font-weight:700}
+  .layer .desc{font-size:14.5px; color:#444; margin:0}
+  .layer .tagline{font-size:12.5px; color:var(--muted); margin-top:6px; font-style:italic}
+
+  /* comparison table */
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:34%}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence</p>
+  <h1><span class="num">Unit 01</span> — What AI Engineering Is (and Isn't)</h1>
+  <p class="lead">How building on foundation models differs from classic ML and full-stack engineering — and which layer of the AI stack your team actually operates on.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">vocab</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Place every future conversation with your engineers on the correct layer of the stack.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">Foundation for the whole series; feeds directly into Unit 02 (non-determinism).</div></div>
+  </div>
+
+  <h2>Why this unit is first</h2>
+  <p>Before you decide <em>whether</em> to build an AI feature, argue about <em>which</em> pattern to use, or ask <em>what your eval plan is</em>, you need a shared map of the territory. This unit gives you that map: what the discipline of AI engineering actually is, why it emerged as its own thing, and — most usefully for a PM — the three-layer stack that tells you where your team's work lives. Almost every disagreement you'll have with engineers is really a disagreement about which layer a problem belongs to. Get this straight now and the next twenty-three units land on solid ground.</p>
+
+  <h2>1. Where AI engineering came from</h2>
+  <p>ChatGPT and Copilot can look like they appeared from nowhere, but they're the end of a long chain: <span class="keyterm">language models → large language models → foundation models → AI engineering</span>. You don't need the history for its own sake, but each step introduced a vocabulary word you'll use constantly.</p>
+
+  <h3>Language models, tokens, and "completion"</h3>
+  <p>A <span class="keyterm">language model</span> encodes statistical information about language — essentially, how likely a word is to appear in a given context. Its basic unit is the <span class="keyterm">token</span>: a character, a word, or a piece of a word (for GPT-4, an average token is about ¾ of a word, so ~100 tokens ≈ 75 words). The full set of tokens a model can use is its <span class="keyterm">vocabulary</span>.</p>
+  <p>The mental model that matters most: a language model is a <strong>completion machine</strong>. Give it "To be or not to be" and it completes ", that is the question." A huge range of tasks — translation, summarization, classification, coding — can be reframed as completion. But completions are <em>predictions based on probabilities, not guarantees of correctness.</em> That probabilistic nature is what makes these models exciting and maddening, and it's the entire subject of Unit 02.</p>
+
+  <div class="callout">
+    <span class="h">Why it matters to you</span>
+    "The model made something up" isn't a bug report — it's the technology working exactly as designed. A completion machine completes; it does not look things up or verify. Internalizing this reframes how you write acceptance criteria.
+  </div>
+
+  <h3>Self-supervision: the unlock</h3>
+  <p>Classic ML relied on <span class="keyterm">supervision</span> — training on human-labeled examples, which is slow and expensive (labeling ImageNet's million images at 5¢ each ≈ $50,000; scaling to a million categories ≈ $50 million). Language models scaled because they learn by <span class="keyterm">self-supervision</span>: the labels are inferred from the input itself. The sentence "I love street food." silently generates six training examples (predict "I", then "love", then "street"…). Because text is everywhere — books, blogs, Reddit — you can build a massive training set with no labeling cost. That's what let language models grow into <strong>large</strong> language models.</p>
+  <p>"Large" is measured in <span class="keyterm">parameters</span> (variables updated during training). The bar keeps moving: OpenAI's first GPT (2018) had 117M parameters and was considered large; today 100B+ is the rough threshold. The number itself is less important than the trend — bigger models generally have more capacity but need more data and compute.</p>
+
+  <h3>From LLMs to foundation models</h3>
+  <p>Extend a language model to handle images, audio, video, and more and you get a <span class="keyterm">foundation model</span> (a multimodal generative one is a <span class="keyterm">large multimodal model</span>, or LMM). Throughout this series, <em>foundation model</em> refers to both. The word <em>foundation</em> is deliberate: these models are important building blocks that can be <em>built upon</em> for many different needs. Two shifts came with them:</p>
+  <p>First, <strong>task-specific → general-purpose.</strong> An old sentiment model couldn't translate; a foundation model does both, reasonably well, out of the box. Second, and this is the whole business case: <strong>adapting an existing model is radically cheaper than building one</strong> — "ten examples and one weekend versus 1 million examples and six months." The three common adaptation techniques you'll hear constantly are <span class="keyterm">prompt engineering</span>, <span class="keyterm">RAG</span> (retrieval-augmented generation — supplement the model with an external database), and <span class="keyterm">finetuning</span> (further-train the model on your data). Whether to adapt an existing model or build your own is the classic <strong>buy-vs-build</strong> question.</p>
+
+  <h3>So why a new term — "AI engineering"?</h3>
+  <p>If traditional ML engineering <em>develops</em> models, <span class="keyterm">AI engineering</span> is the practice of building applications on top of foundation models someone else trained. Three conditions together created ideal conditions for its explosive growth:</p>
+  <table class="tbl">
+    <tr><th>Factor</th><th>What it means</th></tr>
+    <tr><td>General-purpose capability</td><td>Models can now do <em>more</em> tasks, not just existing ones better — expanding the user base and demand for AI apps.</td></tr>
+    <tr><td>Increased investment</td><td>Post-ChatGPT capital surge; cheaper-to-build apps make ROI attractive. One in three S&amp;P 500 companies mentioned AI on 2023 Q2 earnings calls (3× the prior year).</td></tr>
+    <tr><td>Low barrier to entry</td><td><em>Model-as-a-service</em> APIs remove the need to host models; you can even build with minimal code, working in plain English.</td></tr>
+  </table>
+  <p>The takeaway isn't the statistics — it's the reframing: <strong>the center of gravity moved from <em>training</em> models to <em>adapting and evaluating</em> them.</strong> That single shift is why the rest of this curriculum spends its time on evals, prompting, retrieval, and production plumbing rather than gradient descent.</p>
+
+  <h2>2. The three-layer AI stack</h2>
+  <p>This is the most operationally useful idea in the unit. Every AI application sits on three layers. You typically start at the top and move down only as needed.</p>
+
+  <div class="stack">
+    <div class="layer app">
+      <h4>① Application development</h4>
+      <p class="desc">Giving a model good prompts and the right context, evaluating its outputs rigorously, and building the interface users interact with. <strong>Where the most activity — and most PM leverage — lives.</strong></p>
+      <p class="tagline">Responsibilities: evaluation · prompt engineering &amp; context construction · AI interface</p>
+    </div>
+    <div class="layer mod">
+      <h4>② Model development</h4>
+      <p class="desc">Tooling to build, train, finetune, and inference-optimize models — plus the dataset engineering that feeds them. This is the layer most associated with traditional ML.</p>
+      <p class="tagline">Responsibilities: modeling &amp; training · dataset engineering · inference optimization</p>
+    </div>
+    <div class="layer inf">
+      <h4>③ Infrastructure</h4>
+      <p class="desc">The unglamorous, stable base: model serving, managing data and compute, and monitoring. Its core needs barely changed with foundation models.</p>
+      <p class="tagline">Responsibilities: serving · compute &amp; data management · monitoring</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="h">The move to make in every meeting</span>
+    When an engineer describes a problem or proposes a fix, silently ask: <em>which layer is this?</em> "Our answers are wrong" at the application layer (bad prompt/context, weak evals) is a totally different fix — and owner, and timeline — than the same symptom at the model layer (needs finetuning) or infrastructure layer (serving the wrong model version). Most teams operate almost entirely on layer ①. Knowing that keeps you from greenlighting a model-layer project to solve an application-layer bug.
+  </div>
+
+  <h2>3. How AI engineering differs from what came before</h2>
+
+  <h3>vs. traditional ML engineering</h3>
+  <p>Three differences stand out:</p>
+  <table class="tbl">
+    <tr><th>Dimension</th><th>The shift</th></tr>
+    <tr><td>Modeling</td><td>You <em>adapt</em> a model someone else trained rather than train your own — less about modeling, more about model adaptation.</td></tr>
+    <tr><td>Compute &amp; latency</td><td>Models are bigger, pricier, and slower, raising the stakes on inference optimization and GPU/cluster skills.</td></tr>
+    <tr><td>Evaluation</td><td>Open-ended outputs are far harder to judge than close-ended ones, so <strong>evaluation becomes a much bigger problem</strong> — the through-line of this whole curriculum.</td></tr>
+  </table>
+  <p>Adaptation splits cleanly by one question: <em>does it change model weights?</em> <span class="keyterm">Prompt-based techniques</span> (prompt engineering) adapt via instructions and context — no weight changes, less data, easy to start, sometimes not enough. <span class="keyterm">Finetuning</span> changes the weights — more complex, more data, but reaches things prompting can't. Keep this fork in mind; Unit 05 turns it into a decision tree.</p>
+
+  <div class="callout">
+    <span class="h">Vocabulary hygiene</span>
+    "Training" always means changing model weights. Feeding examples into a prompt is <strong>not</strong> training — it's prompt engineering, no matter how often you hear "I trained ChatGPT on my journal." Precisely: <em>pre-training</em> = from scratch (~98% of the compute); <em>finetuning / post-training</em> = continuing to train an already-trained model. Prompting touches none of it.
+  </div>
+
+  <h3>vs. full-stack engineering</h3>
+  <p>The heavy emphasis on the application layer — especially interfaces — pulls AI engineering toward full-stack web development. Tooling now supports JavaScript, not just Python, and more AI engineers arrive from web backgrounds. The deeper consequence is a <strong>reversed workflow</strong>:</p>
+  <table class="tbl">
+    <tr><th>Traditional ML</th><th>AI engineering</th></tr>
+    <tr><td>Gather data → train model → build product last.</td><td>Build the product first with an off-the-shelf model → invest in data and models only once it shows promise.</td></tr>
+  </table>
+  <p>This rewards teams that can iterate fast, and it means AI engineers are far more involved in product decisions than ML engineers historically were. For you, that's an opportunity: <strong>product and engineering are no longer sequential.</strong> You can put a working prototype in front of users in week one — which is exactly what makes the feasibility question in Unit 03 both possible and necessary.</p>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Use <em>foundation model, token, self-supervision, adaptation, prompt engineering, RAG, finetuning</em> correctly — and correct their misuse.</li>
+      <li>Locate any problem, proposal, or bug on the three-layer stack, and know that most of your team's work sits on the application layer.</li>
+      <li>Explain why evaluation is a bigger deal here than in classic ML (open-ended outputs) — priming the eval thread that starts at Unit 06.</li>
+      <li>Recognize the "build the product first" workflow as a feature of the discipline, not a shortcut.</li>
+    </ul>
+  </div>
+  <p>If any of those feels shaky, this is the unit to reread — everything downstream assumes it.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 01 of 24 · Core sequence · Tag: <em>vocab</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 02 — Why the Output Is Never the Same Twice</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

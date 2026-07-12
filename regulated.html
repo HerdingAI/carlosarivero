@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Implementing AI in regulated environments? — Signal / Noise</title>
+<meta name="description" content="Two open, sourced tools for AI regulation and compliance cost in US insurance and financial services.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div style="min-height:100vh;background:#faf9f6;color:#1a1a1a;font-family:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;font-size:18px;line-height:1.62">
+<div style="max-width:700px;margin:0 auto;padding:56px 24px 96px">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e2dc;padding-bottom:12px">
+    <a href="index.html" style="font-size:16px;font-weight:700;color:#1a1a1a;text-decoration:none">Signal <span style="color:#b4552d">/</span> Noise</a>
+    <div style="display:flex;gap:14px;align-items:center">
+      <a href="https://www.linkedin.com/in/carlosarivero/" title="LinkedIn" class="icon-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z"></path></svg></a>
+      <a href="https://github.com/HerdingAI" title="GitHub" class="icon-link"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.24c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.57 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.25 10.25 0 0 0 22 12.24C22 6.58 17.52 2 12 2z"></path></svg></a>
+    </div>
+  </div>
+
+  <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#b4552d;font-weight:700;margin:44px 0 10px">Working tools · Open data</p>
+  <h1 style="font-size:34px;line-height:1.15;font-weight:700;letter-spacing:-.01em;margin:0">Implementing AI in regulated environments?</h1>
+  <p style="font-size:17.5px;margin:20px 0 0;color:#333">In insurance and financial services, the question is rarely <em>can we build it</em> — it's <em>what will the regulator expect, and what will it cost us to satisfy them</em>. I found the answers scattered across bulletins, law-firm alerts, and PDFs, so I built two tools to make them legible. Both are open — dataset, code, and methodology.</p>
+
+  <!-- tool 1 -->
+  <div style="margin-top:52px;padding-top:26px;border-top:1px solid #1a1a1a">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap">
+      <h2 style="font-size:24px;font-weight:700;margin:0;letter-spacing:-.01em">AI Reg Atlas</h2>
+      <a href="https://ai-regulation-atlas.vercel.app/" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:600;color:#b4552d;text-decoration:none">ai-regulation-atlas.vercel.app →</a>
+    </div>
+    <p style="font-size:16px;margin:14px 0 0;color:#333">A live, sourced tracker of AI regulation in US insurance and financial services — state by state, framework by framework. Narrower and more specialized than the general trackers: every row links to its primary source and carries its own verification date. Built as an open dataset (CSV/JSON, CC-BY), not a law-firm content page.</p>
+    <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13.5px;margin:12px 0 0;color:#5c5c5c;line-height:1.6">Use it to answer: which states have adopted the NAIC AI Model Bulletin, which are in the evaluation-tool pilot, and which layer their own frameworks on top — plus the federal and EU picture.</p>
+  </div>
+
+  <!-- tool 2 -->
+  <div style="margin-top:40px;padding-top:26px;border-top:1px solid #e5e2dc">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap">
+      <h2 style="font-size:24px;font-weight:700;margin:0;letter-spacing:-.01em">AI Compliance Cost Lens</h2>
+      <a href="https://ai-compliance-cost-lens-applicatio.vercel.app/" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:600;color:#b4552d;text-decoration:none">compliance-cost-lens →</a>
+    </div>
+    <p style="font-size:16px;margin:14px 0 0;color:#333">Compliance is usually discussed as fear; this makes it arithmetic. An interactive view of what each regulatory regime actually costs to satisfy — so you can weigh the burden of a framework the same way you'd weigh any other product constraint.</p>
+    <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13.5px;margin:12px 0 0;color:#5c5c5c;line-height:1.6">Use it to answer: if we ship this model into these states, what does the compliance work actually look like — and where is the marginal cost of one more jurisdiction lowest.</p>
+  </div>
+
+  <div style="margin-top:52px;background:#f5ede6;border-radius:12px;padding:20px 24px">
+    <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13.5px;line-height:1.65;color:#444;margin:0"><strong style="color:#1a1a1a">A note on trust.</strong> Neither tool is legal advice. Every claim links to primary regulatory text — verify against the source before acting. That discipline is the point: in regulated AI, showing your sources <em>is</em> the product.</p>
+  </div>
+
+  <div style="margin-top:56px;padding-top:18px;border-top:2px solid #1a1a1a;display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;color:#5c5c5c">
+    <a href="index.html" style="color:#5c5c5c;text-decoration:none">← Back home</a>
+    <a href="https://www.linkedin.com/in/carlosarivero/" style="color:#b4552d;text-decoration:none;font-weight:600">Working on this problem? LinkedIn →</a>
+  </div>
+
+</div>
+</div>
+
+</body>
+</html>
