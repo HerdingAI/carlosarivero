@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 06 — Why Evals Are the Whole Game — Signal / Noise</title>
+<meta name="description" content="The empirical claim that failed AI products share one root cause — no evaluation system — plus the three-level eval structure and the iterate-fast flywheel.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --eval:#6b4d8a; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{
+    font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700;
+    letter-spacing:-.01em;
+  }
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  a:hover{border-bottom-color:var(--accent)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+  .pill.thread{background:var(--eval); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* virtuous cycle */
+  .cycle{display:flex; gap:10px; margin:24px 0; flex-wrap:wrap; align-items:stretch;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .cycle .s{flex:1; min-width:150px; background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:14px 16px}
+  .cycle .s h4{margin:0 0 4px; font-size:.98rem; color:var(--accent)}
+  .cycle .s p{margin:0; font-size:13.5px; color:#555}
+  .cycle .arrow{display:flex; align-items:center; color:var(--muted); font-size:20px}
+  @media (max-width:600px){.cycle .arrow{transform:rotate(90deg); justify-content:center}}
+
+  /* eval levels */
+  .lvl{border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:14px 0; background:var(--card);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; border-left-width:5px}
+  .lvl.l1{border-left-color:#5c8a5c} .lvl.l2{border-left-color:#c99a3b} .lvl.l3{border-left-color:#b4552d}
+  .lvl h4{margin:0 0 4px; font-size:1.08rem}
+  .lvl h4 .tagn{font-size:11px; color:#fff; border-radius:5px; padding:2px 7px; margin-right:8px; letter-spacing:.04em; vertical-align:middle}
+  .lvl.l1 h4 .tagn{background:#5c8a5c} .lvl.l2 h4 .tagn{background:#c99a3b} .lvl.l3 h4 .tagn{background:#b4552d}
+  .lvl p{margin:6px 0; font-size:14.5px; color:#444}
+  .lvl .cad{font-size:12.5px; color:#777; font-style:italic}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence &nbsp;·&nbsp; Eval Thread 1/5</p>
+  <h1><span class="num">Unit 06</span> — Why Evals Are the Whole Game</h1>
+  <p class="lead">The empirical claim that failed AI products share one root cause — no evaluation system — plus the three-level eval structure and the iterate-fast flywheel.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">evals</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Adopt "what's our eval plan?" as your reflexive first question for any AI feature.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">Opens the eval thread that runs through Units 07, 09, 14, 15, and 16 — evaluation as a lens applied at every stage, not a stage of its own.</div></div>
+  </div>
+
+  <h2>Why evaluation gets its own thread</h2>
+  <p>Unit 02 showed that AI output is non-deterministic; Units 03–05 decided whether and how to build. Now the question that determines whether any of it works in production: <strong>how do you know it's good — and getting better?</strong> This is Unit 1 of a five-part thread deliberately woven through the rest of the curriculum, because evaluation isn't a phase you complete; it's the instrument you read at every phase. If you take one reflex from this unit, make it the question that opens every AI feature review: <em>"What's our eval plan?"</em></p>
+
+  <h2>1. The root-cause claim</h2>
+  <p>Across many AI products, successful and failed, the failures share one common cause: <strong>the absence of a robust evaluation system.</strong> Teams pour effort into the model and prompts, ship a demo, and then plateau — unable to tell whether a change helped or hurt. The claim is strong and worth holding onto because it reframes your job: your leverage as a PM isn't in the model, it's in insisting the team can <em>measure</em> the model.</p>
+
+  <div class="callout">
+    <span class="h">The analogy that makes it click</span>
+    Eval systems are to AI products what automated tests are to software: an up-front investment that pays massive dividends by letting you change things safely and fast. A team without evals is editing production code with no test suite — every change is a gamble, and confidence comes only from vibes.
+  </div>
+
+  <h2>2. Iteration speed is the actual success factor</h2>
+  <p>Success with AI, like software, hinges on <strong>how fast you can iterate</strong>. That requires three capabilities working together in a loop:</p>
+
+  <div class="cycle">
+    <div class="s"><h4>① Evaluate</h4><p>Measure quality — tests and metrics that say whether output is good.</p></div>
+    <div class="arrow">→</div>
+    <div class="s"><h4>② Debug</h4><p>Log and inspect data to find <em>why</em> something failed.</p></div>
+    <div class="arrow">→</div>
+    <div class="s"><h4>③ Change</h4><p>Adjust behavior — prompt, RAG, finetune, or code.</p></div>
+  </div>
+
+  <p>Most teams pour all their energy into ③ — endlessly tweaking prompts — which is exactly what keeps them stuck at demo quality. Without ① and ②, you can't tell whether a change improved anything; you're playing whack-a-mole in the dark. Streamline evaluation and the other two get easy. <strong>Evaluation is the bottleneck that gates everything else.</strong></p>
+
+  <h2>3. Case study: how a real assistant broke through the plateau</h2>
+  <p>Lucy, the AI assistant inside the real-estate SaaS Rechat, is the canonical arc. Early on, prompt engineering drove rapid progress. Then, as Lucy's surface area grew, quality <strong>plateaued</strong> — with three telltale symptoms every PM should recognize:</p>
+  <table class="tbl">
+    <tr><td>Whack-a-mole</td><td>Fixing one failure mode spawned new ones elsewhere.</td></tr>
+    <tr><td>Vibe-check visibility</td><td>No real insight into performance across tasks beyond gut feel.</td></tr>
+    <tr><td>Bloated prompts</td><td>Prompts ballooned into long, unwieldy forms trying to patch every edge case.</td></tr>
+  </table>
+  <p>The fix wasn't a better model or a cleverer prompt — it was building a systematic evaluation system at the center of the process. <em>Eval and curation</em> sits in the middle of everything, and it's where the team should spend most of its time.</p>
+
+  <div class="callout">
+    <span class="h">Recognize the plateau in your own product</span>
+    Those three symptoms — whack-a-mole fixes, no visibility beyond vibes, ever-growing prompts — are the clinical signs that a team has outrun its ability to measure. When you see them, the answer is almost never "try another prompt." It's "build the eval system you skipped."
+  </div>
+
+  <h2>4. The three levels of evaluation</h2>
+  <p>Evaluation isn't one thing. It's three levels, ordered by cost — which dictates how often you run each. Get a good chunk of Level 1 working before leaning on Level 2.</p>
+
+  <div class="lvl l1">
+    <h4><span class="tagn">LEVEL 1</span>Unit tests — assertions</h4>
+    <p>Fast, cheap code assertions (like pytest) scoped by <strong>feature × scenario</strong>. For a "listing finder," scenarios might assert the query returns exactly one, many, or zero results; generic tests catch things like leaked internal IDs. Generate test inputs synthetically (an LLM can write them), and update them constantly as real failures surface.</p>
+    <p class="cad">Run on every code change. Note: you don't need a 100% pass rate — the target is a <em>product decision</em> about which failures you'll tolerate.</p>
+  </div>
+
+  <div class="lvl l2">
+    <h4><span class="tagn">LEVEL 2</span>Human &amp; model eval</h4>
+    <p>For what assertions can't catch. Prerequisite: <strong>log your traces</strong> (the full conversation/request flow). Then <em>look at your data</em> — remove all friction from viewing traces, and label examples simply (binary good/bad beats granular scores to start). You can also automate grading with an LLM judge, but you must validate it against human labels and keep checking agreement. Human review never fully goes away.</p>
+    <p class="cad">Run on a set cadence. This is where the highest-leverage learning happens — Unit 14 is built on it.</p>
+  </div>
+
+  <div class="lvl l3">
+    <h4><span class="tagn">LEVEL 3</span>A/B testing</h4>
+    <p>The real-world check that your product actually drives the user behavior and outcomes you want. Mechanically similar to A/B testing any product.</p>
+    <p class="cad">Run only after significant product changes, once you're confident it's ready for real users. Appropriate for more mature products.</p>
+  </div>
+
+  <div class="callout">
+    <span class="h">Cost sets cadence</span>
+    Level 3 &gt; Level 2 &gt; Level 1 in cost, so cheap tests run constantly and expensive ones run rarely. This is the same instinct behind a software test pyramid — most of your coverage should be fast, cheap assertions.
+  </div>
+
+  <h2>5. The payoff: an eval system is a flywheel</h2>
+  <p>Here's why this is a strategic investment, not overhead. The infrastructure you build for evaluation is the <em>same</em> infrastructure that powers everything else — so once it exists, capabilities come nearly for free:</p>
+  <table class="tbl">
+    <tr><td>Fine-tuning data</td><td>Fine-tuning is 99% assembling high-quality data covering your product's surface — which a good eval system already generates and curates. Your evals become a data engine.</td></tr>
+    <tr><td>Debugging</td><td>A complaint or error is fast to diagnose when you already have searchable traces, assertions that flag bad behavior, and tools to test a fix. Eval infra <em>is</em> debug infra.</td></tr>
+    <tr><td>Faster iteration</td><td>Every improvement is measurable, so the evaluate → debug → change loop spins faster over time — the flywheel that separates great AI products from stuck ones.</td></tr>
+  </table>
+  <p>This is the reframe to carry into budget conversations: evals look like an operational cost, but they're the asset that compounds — turning each fix into reusable test cases, training data, and debugging power.</p>
+
+  <div class="callout">
+    <span class="h">The takeaways worth memorizing</span>
+    Remove <em>all</em> friction from looking at data. Keep it simple — use the tools you already have before buying anything. If you're not looking at lots of data, you're doing it wrong. Don't trust generic, off-the-shelf eval frameworks to measure <em>your</em> product — build evals specific to your problem. Write lots of tests and update them often.
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>State the root-cause claim — failed AI products lack an evaluation system — and use it to reframe where a struggling team should invest.</li>
+      <li>Spot the plateau's three symptoms (whack-a-mole, vibes-only visibility, bloated prompts) and prescribe evals instead of another prompt.</li>
+      <li>Distinguish the three eval levels and match each to its cadence (unit tests every change, human/model eval on a cadence, A/B tests for mature products).</li>
+      <li>Argue evals as a compounding asset — a flywheel feeding fine-tuning data, debugging, and faster iteration — not a cost.</li>
+      <li>Ask "what's our eval plan?" reflexively, before design and before launch.</li>
+    </ul>
+  </div>
+  <p>This unit made the case <em>for</em> evals. The rest of the thread makes them concrete: Unit 07 defines the criteria you're measuring against, Unit 09 designs the pipeline, Unit 14 runs error analysis on real traces, and Units 15–16 handle LLM judges and the reference details.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 06 of 24 · Core sequence · Tag: <em>evals</em> · Eval thread 1/5 · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 07 — Defining "Good": Evaluation Criteria &amp; Model Selection</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

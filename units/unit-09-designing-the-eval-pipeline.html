@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 09 — Designing the Eval Pipeline — Signal / Noise</title>
+<meta name="description" content="The three-step pipeline design — evaluate every component, write an evaluation guideline, then define methods and data — turning 'we need evals' into a concrete, buildable plan.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --eval:#6b4d8a; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* three steps */
+  .steps{margin:24px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .step{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px 16px 56px;
+    margin:12px 0; position:relative; border-left-width:5px; border-left-color:var(--eval)}
+  .step .n{position:absolute; left:14px; top:16px; background:var(--eval); color:#fff; width:30px; height:30px;
+    border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px}
+  .step h4{margin:0 0 4px; font-size:1.1rem}
+  .step p{margin:0; font-size:14.5px; color:#555}
+
+  /* mapping bars */
+  .map{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:22px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .map .r{display:flex; align-items:center; gap:12px; margin:8px 0; font-size:14px}
+  .map .metric{flex:0 0 130px; font-weight:600; font-size:13px}
+  .map .bar{flex:1; height:22px; background:#eee; border-radius:5px; overflow:hidden}
+  .map .fill{height:100%; background:linear-gradient(90deg,#c99a3b,#b4552d); display:flex; align-items:center;
+    padding-left:8px; color:#fff; font-size:12px; font-weight:700}
+  .map .out{flex:0 0 auto; font-size:13px; color:#555}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+    .map .metric{flex-basis:90px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence &nbsp;·&nbsp; Eval Thread 2/5</p>
+  <h1><span class="num">Unit 09</span> — Designing the Eval Pipeline</h1>
+  <p class="lead">The three-step pipeline design — evaluate every component, write an evaluation guideline, then define methods and data — turning "we need evals" into a concrete, buildable plan.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">evals</span><span class="pill">production</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Sketch a component-level eval plan for a real system — the exact artifact you'll produce in the Unit 13 capstone.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">Operationalizes Units 06–07: 06 said why, 07 defined the criteria, this designs the pipeline. The Unit 13 capstone tests it.</div></div>
+  </div>
+
+  <h2>From "we need evals" to a plan</h2>
+  <p>Unit 06 argued evals are the whole game; Unit 07 defined <em>what</em> "good" means. This unit is the bridge to <em>doing</em> it: a three-step recipe for designing an evaluation pipeline you can actually build. It targets open-ended tasks (close-ended ones are easier and fall out as a simplification). By the end you should be able to sketch a component-level eval plan for a real system — which is precisely the capstone deliverable in Unit 13.</p>
+
+  <div class="steps">
+    <div class="step"><span class="n">1</span><h4>Evaluate all components in the system</h4><p>Decompose the system and measure each piece independently, per turn and per task — not just the final output.</p></div>
+    <div class="step"><span class="n">2</span><h4>Create an evaluation guideline</h4><p>Define what "good" (and "bad," and "out of scope") means, with criteria, scoring rubrics, and a mapping to business impact. The most important step.</p></div>
+    <div class="step"><span class="n">3</span><h4>Define evaluation methods and data</h4><p>Pick a method per criterion, then curate and slice annotated evaluation sets sized for reliable results.</p></div>
+  </div>
+
+  <h2>Step 1 — Evaluate every component, not just the output</h2>
+  <p>Real systems are multi-component and multi-turn. If you only measure the end result, a failure tells you <em>that</em> something broke, not <em>where</em>. Take a system that pulls a person's current employer from a résumé PDF in two steps: (1) extract text from the PDF, (2) extract the employer from that text. A wrong answer could come from either. Measure them separately — text-extraction by <em>similarity</em> to ground truth, employer-extraction by <em>accuracy</em> given correct text — and you know exactly which to fix.</p>
+  <p>Evaluate at multiple granularities, and mind the crucial distinction:</p>
+  <table class="tbl">
+    <tr><td>Turn-based</td><td>Quality of each individual output/response. A "turn" can span multiple steps.</td></tr>
+    <tr><td>Task-based</td><td>Did the system actually accomplish the user's goal — and in how many turns? Solving a problem in 2 turns vs. 20 is a huge difference.</td></tr>
+  </table>
+  <div class="callout">
+    <span class="h">Task-based is what users actually care about</span>
+    Users don't care if any single response was elegant; they care whether the system got their job done. Task-based evaluation is more important — but harder, because task <em>boundaries</em> are fuzzy (is the next message a follow-up or a new task?). Push your team to measure task completion, not just per-response quality.
+  </div>
+
+  <h2>Step 2 — The evaluation guideline (the most important step)</h2>
+  <p>An ambiguous guideline yields ambiguous scores. If you can't say what a bad response looks like, you can't catch one. Three sub-tasks:</p>
+
+  <h3>Define what good means — including what it <em>shouldn't</em> do</h3>
+  <p>The hardest part usually isn't judging an output; it's defining "good." <strong>A correct response isn't always a good one:</strong> to a job-fit question, "You are a terrible fit" may be accurate but useless — a good response explains the gap and how to close it. Also define scope: should a support bot answer questions about an upcoming election? If not, specify how to detect out-of-scope inputs and how to respond. In practice, teams average around two to three criteria per application — e.g. for support: <em>relevance, factual consistency, safety</em>.</p>
+
+  <h3>Create scoring rubrics with examples</h3>
+  <p>For each criterion pick a scoring scheme (binary 0/1; 1–5; −1/0/1 for contradiction/neutral/entailment) and write a rubric with concrete examples: what earns a 1, and why? Then <strong>validate the rubric with humans</strong> — if people can't apply it consistently, it's too ambiguous and needs refining. This back-and-forth is the backbone of a reliable pipeline (and the rubric later doubles as annotation guidance for finetuning data).</p>
+
+  <h3>Tie evaluation metrics to business metrics</h3>
+  <p>A metric only matters in the context of the business goal. "80% factual consistency" is meaningless until you translate it into impact:</p>
+  <div class="map">
+    <div class="r"><span class="metric">80% factual</span><div class="bar"><div class="fill" style="width:30%">30%</div></div><span class="out">of support automatable</span></div>
+    <div class="r"><span class="metric">90% factual</span><div class="bar"><div class="fill" style="width:50%">50%</div></div><span class="out">automatable</span></div>
+    <div class="r"><span class="metric">98% factual</span><div class="bar"><div class="fill" style="width:90%">90%</div></div><span class="out">automatable</span></div>
+  </div>
+  <p>This mapping is what makes investment decisions defensible — you can see what a metric gain is worth. Set a <strong>usefulness threshold</strong> too (the minimum score to be useful at all), and know the underlying business metric you're serving (stickiness, engagement) — while staying aware that optimizing engagement can push a product toward addictive or extreme content.</p>
+
+  <h2>Step 3 — Methods and data</h2>
+
+  <h3>Select a method per criterion — and mix them</h3>
+  <p>Different criteria want different methods: a small specialized classifier for toxicity, semantic similarity for relevance, an AI judge for factual consistency against context. You can <strong>mix and match on the same criterion</strong> to balance cost and confidence — e.g. a cheap classifier on 100% of data plus an expensive AI judge on a 1% sample. Use <span class="keyterm">logprobs</span> when available to read model confidence (three classes all at 30–40% = unsure; one at 95% = confident). And don't be afraid to keep <strong>human evaluation in the loop, even in production</strong> — many teams treat human judgment as the North Star, hand-reviewing a daily sample to catch drift.</p>
+  <div class="callout">
+    <span class="h">Experimentation vs. production evals differ</span>
+    In experimentation you have reference data to compare against. In production you often don't — but you have real users. Design, up front, what user feedback you'll collect, how it correlates with your other metrics, and how you'll feed it back into improvement (the subject of Unit 21).
+  </div>
+
+  <h3>Annotate — and slice — your evaluation data</h3>
+  <p>Curate annotated examples for every component and criterion, across turn- and task-based evaluation; use real production data where possible. Then <strong>slice</strong> — evaluate on subsets separately — because aggregate numbers hide problems:</p>
+  <table class="tbl">
+    <tr><td>Catch bias</td><td>Check performance on minority user groups you'd otherwise average over.</td></tr>
+    <tr><td>Debug</td><td>Poor performance on a subset points at an attribute — length, topic, format.</td></tr>
+    <tr><td>Find improvements</td><td>Weak on long inputs? Maybe a different technique or model.</td></tr>
+    <tr><td>Avoid Simpson's paradox</td><td>A model can win overall yet lose on <em>every</em> subgroup (or vice versa). Only slicing reveals it.</td></tr>
+  </table>
+  <p>Keep <strong>multiple evaluation sets</strong>: one matching production distribution for an overall read, plus slices by tier (paid/free), source (mobile/web), known-hard cases, common-typo inputs, and an <em>out-of-scope</em> set to confirm your app declines what it should. The rule of thumb: <em>if you care about something, put a test set on it.</em></p>
+
+  <div class="callout">
+    <span class="h">Is your eval set big enough? Bootstrap it</span>
+    An eval set must be large enough to be reliable but small enough to afford. To check 100 examples are enough: resample 100 <em>with replacement</em> repeatedly and re-score. If results swing wildly (90% on one draw, 70% on another), the pipeline isn't trustworthy — you need more data. Useful heuristic for comparing systems: to detect a 3× smaller score difference reliably, you need roughly 10× more samples.
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Decompose a system and specify how each component is measured — and evaluate per turn <em>and</em> per task, prioritizing task completion.</li>
+      <li>Write an evaluation guideline: criteria, scope boundaries, scoring rubrics with examples, validated by humans.</li>
+      <li>Map an eval metric to business impact and set a usefulness threshold, making metric investments defensible.</li>
+      <li>Choose (and mix) evaluation methods per criterion, and keep humans in the loop in production.</li>
+      <li>Curate sliced evaluation sets and sanity-check their size by bootstrapping — dodging Simpson's paradox and false confidence.</li>
+    </ul>
+  </div>
+  <p>This is the artifact the capstone (Unit 13) asks you to produce. The next eval unit — 14, the highest-ROI in the series — takes the traces this pipeline logs and turns them into systematic error analysis.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 09 of 24 · Core sequence · Tags: <em>evals · production</em> · Eval thread 2/5 · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 10 — The Production Architecture, Assembled</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

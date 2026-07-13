@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 12 — Cost &amp; Latency: The Two Constraints That Kill Roadmaps — Signal / Noise</title>
+<meta name="description" content="The inference overview — prefill vs. decode, the standard performance metrics, and where cost actually comes from — so you stop writing roadmap items that are physically impossible at current latency.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:24%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* prefill vs decode */
+  .pd{display:flex; gap:14px; margin:24px 0; flex-wrap:wrap;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .pd .c{flex:1; min-width:250px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; border-top-width:4px}
+  .pd .pre{border-top-color:#5c7a99} .pd .dec{border-top-color:#b4552d}
+  .pd .c h4{margin:0 0 3px; font-size:1.08rem}
+  .pd .c .sub{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#888; margin-bottom:8px}
+  .pd .c p{margin:0; font-size:14px; color:#555}
+  .pd .pre .sub{color:#5c7a99} .pd .dec .sub{color:#b4552d}
+
+  /* latency formula */
+  .formula{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin:22px 0;
+    text-align:center; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .formula .eq{font-size:1.05rem; font-weight:700}
+  .formula .eq .ttft{color:#5c7a99} .formula .eq .tpot{color:#b4552d}
+  .formula .note{font-size:13px; color:#777; margin-top:8px}
+
+  /* percentile bars */
+  .perc{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:22px 0;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px}
+  .perc .row{display:flex; align-items:center; gap:10px; margin:5px 0}
+  .perc .lb{flex:0 0 70px; color:#666}
+  .perc .track{flex:1; height:16px; background:#eee; border-radius:4px; overflow:hidden}
+  .perc .f{height:100%; background:#5c7a99}
+  .perc .f.bad{background:#b4552d}
+  .perc .v{flex:0 0 70px; text-align:right; color:#444}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence &nbsp;·&nbsp; CORE checkpoint next</p>
+  <h1><span class="num">Unit 12</span> — Cost &amp; Latency: The Two Constraints That Kill Roadmaps</h1>
+  <p class="lead">The inference overview — prefill vs. decode, the standard performance metrics, and where cost actually comes from — so you stop writing roadmap items that are physically impossible at current latency.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">data-cost</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Understand roughly why a system is slow or expensive — without needing to fix it — and stop scoping work that's impossible at current latency.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">Closes the CORE pass. Cost and latency also appeared as first-class eval criteria back in Unit 07.</div></div>
+  </div>
+
+  <h2>Why this closes the CORE pass</h2>
+  <p>You now know how to decide, build, evaluate, and feed an AI system. The last CORE piece is the physics that bounds all of it: <strong>every AI feature runs on inference, and inference has a speed and a price you don't get to wish away.</strong> You won't optimize inference — that's the engineers' job. But you need enough of the model to know <em>roughly</em> why something is slow or expensive, and to stop writing roadmap items that current latency makes impossible.</p>
+
+  <h2>1. How generation actually runs: prefill vs. decode</h2>
+  <p>Model inference runs on an <span class="keyterm">inference server</span> (inside a broader inference service that routes and preprocesses requests). If you use an API like OpenAI or Google, that <em>is</em> the inference service; if you self-host, you own it. Generating a response happens in two phases with completely different characteristics:</p>
+
+  <div class="pd">
+    <div class="c pre">
+      <div class="sub">Compute-bound</div>
+      <h4>Prefill</h4>
+      <p>Reads your <em>input</em> tokens, all in parallel. Limited by raw compute. Its duration scales with input length — this is what you wait through before the first token.</p>
+    </div>
+    <div class="c dec">
+      <div class="sub">Memory-bandwidth-bound</div>
+      <h4>Decode</h4>
+      <p>Generates <em>output</em> tokens one at a time, each requiring loading large matrices from memory. Limited by how fast data moves, not by compute. This is why longer outputs cost more time.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="h">The one distinction to keep</span>
+    <strong>Compute-bound</strong> = limited by calculation speed. <strong>Memory-bandwidth-bound</strong> = limited by how fast data moves between memory and processor. Autoregressive language models are typically <em>memory-bandwidth-bound</em> in decode — which is why "just buy a faster chip" often doesn't help, and why the two phases are frequently run on separate machines. You don't need the roofline math; you need to know that <em>input length</em> and <em>output length</em> pull on different bottlenecks.
+  </div>
+
+  <h2>2. The metrics that describe "slow"</h2>
+  <p>From the user's side, the axis is <strong>latency</strong> (response <em>quality</em> is the model's property, not the server's). For streaming responses it breaks into two numbers you'll hear constantly:</p>
+  <table class="tbl">
+    <tr><td>TTFT</td><td><strong>Time to first token</strong> — how fast the first token appears. It's the prefill step, so it grows with input length. Chatbots want this near-instant; document summarization can tolerate more.</td></tr>
+    <tr><td>TPOT</td><td><strong>Time per output token</strong> — how fast each subsequent token comes. In streaming it only needs to beat reading speed (~6–8 tokens/sec is fine for most reading).</td></tr>
+  </table>
+
+  <div class="formula">
+    <div class="eq">Total latency = <span class="ttft">TTFT</span> + <span class="tpot">TPOT</span> × (number of output tokens)</div>
+    <div class="note">Two systems with equal total latency can feel very different — snappy first token + slow stream, vs. slower start + fast stream. Which users prefer is a UX decision worth testing.</div>
+  </div>
+
+  <div class="callout">
+    <span class="h">Two traps in reading latency numbers</span>
+    <strong>(1) Averages lie.</strong> One 3,000 ms outlier among nine ~100 ms requests makes the "average" 390 ms — misleading. Use <em>percentiles</em>: p50 (median), p90, p95, p99. <strong>(2) User-latency ≠ model-latency.</strong> For chain-of-thought or agent queries, the model generates hidden intermediate steps first, so the first token <em>the user sees</em> comes much later than the model's own first token. Insist metrics measure time-to-what-the-user-sees.
+  </div>
+
+  <div class="perc">
+    <div class="row"><span class="lb">p50</span><div class="track"><div class="f" style="width:20%"></div></div><span class="v">100 ms</span></div>
+    <div class="row"><span class="lb">p90</span><div class="track"><div class="f" style="width:30%"></div></div><span class="v">140 ms</span></div>
+    <div class="row"><span class="lb">p95</span><div class="track"><div class="f" style="width:42%"></div></div><span class="v">210 ms</span></div>
+    <div class="row"><span class="lb">p99</span><div class="track"><div class="f bad" style="width:95%"></div></div><span class="v">3,000 ms</span></div>
+  </div>
+  <p style="font-size:14px;color:#777;margin-top:6px">Percentiles surface the tail your average hides — the p99 is where a slice of real users actually live.</p>
+
+  <h2>3. The metrics that describe "expensive"</h2>
+  <p><span class="keyterm">Throughput</span> — output tokens per second across all users — is what ties to cost. Higher throughput generally means lower cost per token. The cost of a request is simply prefill cost + decode cost, and you can back it out from hardware price and throughput. But raw throughput hides a trap:</p>
+  <div class="callout">
+    <span class="h">The latency–throughput trade, and why "goodput" matters</span>
+    Batching more requests together <em>raises throughput</em> (cuts cost) but <em>hurts latency</em> — it's common to double or triple throughput by sacrificing TTFT/TPOT. So optimizing purely for throughput/cost can quietly wreck the user experience. <strong>Goodput</strong> fixes this: it counts only the requests per second that actually meet your latency targets (SLO). A service doing 100 requests/min where only 30 hit the latency bar has a goodput of 30 — that's the number that reflects real delivered value.
+  </div>
+
+  <h2>4. Online vs. batch — the cheapest lever you already have</h2>
+  <p>Providers offer two API modes, and picking the right one is often the biggest cost decision a PM actually controls:</p>
+  <table class="tbl">
+    <tr><td>Online API</td><td>Optimizes for <strong>latency</strong> — processes each request on arrival. For anything user-facing: chatbots, code generation. Often offers <em>streaming</em> (tokens shown as generated) to cut perceived wait.</td></tr>
+    <tr><td>Batch API</td><td>Optimizes for <strong>cost</strong> — trades speed (hours, not seconds) for a big discount (commonly ~50% off). Right for anything without strict latency needs: synthetic data, periodic reports, bulk document onboarding, model migrations, newsletters, reindexing.</td></tr>
+  </table>
+  <p>The move: before assuming an expensive real-time pipeline, ask whether the workload is actually latency-sensitive. Half of "too expensive" problems are online workloads that could be batch.</p>
+
+  <div class="callout">
+    <span class="h">The roadmap discipline this unit buys you</span>
+    Because output is generated token-by-token, <strong>a long response has a latency floor you cannot prompt your way under.</strong> If each token takes ~100 ms, a 1,000-token answer takes ~100 seconds — full stop. Before you scope "instant, comprehensive answers," check whether the token math even allows it. This is the unit that stops physically-impossible roadmap items before they're committed.
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Explain prefill (compute-bound, input length) vs. decode (memory-bandwidth-bound, output length) at a level that lets you reason about why something's slow.</li>
+      <li>Read TTFT, TPOT, and total latency — and insist on percentiles over averages and user-visible over model-internal timing.</li>
+      <li>Connect throughput to cost, spot the latency–throughput trade, and ask for goodput against an SLO.</li>
+      <li>Route workloads to online vs. batch APIs to control cost without hurting the experiences that need speed.</li>
+      <li>Sanity-check a roadmap item against the token-by-token latency floor before committing it.</li>
+    </ul>
+  </div>
+  <p>That completes the CORE pass — a standalone operating model from "should we build it?" to "why is it slow?" Next is the checkpoint that proves it produced judgment, not trivia.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 12 of 24 · Core sequence · Tag: <em>data-cost</em> · CORE pass complete · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 13 — Capstone (CORE checkpoint)</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

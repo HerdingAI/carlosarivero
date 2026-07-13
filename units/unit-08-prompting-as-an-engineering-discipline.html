@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 08 — Prompting as an Engineering Discipline — Signal / Noise</title>
+<meta name="description" content="In-context learning, system vs. user prompts, context-length economics, and the best-practices set — plus how to tell a team doing disciplined prompt iteration from one running on vibes.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* prompt anatomy */
+  .anat{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:6px 8px;
+    margin:22px 0; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13.5px}
+  .anat .seg{padding:10px 14px; border-radius:8px; margin:6px; border-left:4px solid}
+  .anat .s1{background:#eef3ef; border-color:#5c8a5c}
+  .anat .s2{background:#eef1f5; border-color:#5c7a99}
+  .anat .s3{background:var(--accent-soft); border-color:#b4552d}
+  .anat .tagn{font-family:-apple-system,BlinkMacSystemFont,sans-serif; font-size:11px; font-weight:700;
+    text-transform:uppercase; letter-spacing:.05em; color:#666; display:block; margin-bottom:3px}
+
+  /* best practices numbered */
+  .bp{border:1px solid var(--line); border-radius:12px; padding:15px 18px 15px 52px; margin:12px 0; background:var(--card);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; position:relative}
+  .bp .n{position:absolute; left:14px; top:15px; background:var(--accent); color:#fff; width:26px; height:26px;
+    border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px}
+  .bp h4{margin:0 0 4px; font-size:1.05rem}
+  .bp p{margin:0; font-size:14.5px; color:#555}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence</p>
+  <h1><span class="num">Unit 08</span> — Prompting as an Engineering Discipline</h1>
+  <p class="lead">In-context learning, system vs. user prompts, context-length economics, and the best-practices set — plus how to tell a team doing disciplined prompt iteration from one running on vibes.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">prototyping</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Tell disciplined prompt iteration from vibes — and know when "just fix the prompt" is right and when it's a smell.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">The first improvement lever aimed at the targets defined in Unit 07. Its security counterpart is Unit 22 (defensive prompting).</div></div>
+  </div>
+
+  <h2>Why prompting is engineering, not typing</h2>
+  <p>Unit 07 set the target — the criteria you're optimizing toward. This unit is the first and cheapest lever to hit it. The trap is treating prompting as casual wordsmithing. Done well, it's a disciplined loop: change one thing, measure against your evals, version it, keep or revert. Your job as a PM isn't to write the prompt — it's to recognize whether the team is iterating like engineers or guessing like it's a chat window.</p>
+
+  <h2>1. What a prompt actually is</h2>
+  <p>A <span class="keyterm">prompt</span> is an instruction to a model to perform a task. It generally has up to three parts:</p>
+
+  <div class="anat">
+    <div class="seg s1"><span class="tagn">Task description</span>What you want done — including the role the model should play and the output format.</div>
+    <div class="seg s2"><span class="tagn">Example(s)</span>Demonstrations of how to do it — e.g. samples of toxic vs. non-toxic text.</div>
+    <div class="seg s3"><span class="tagn">The task</span>The concrete instance — the question to answer, the document to summarize.</div>
+  </div>
+
+  <p>Prompting only works if the model can <em>follow instructions</em> in the first place (Unit 07's instruction-following criterion). How much prompt-fiddling you need depends on the model's <span class="keyterm">robustness to perturbation</span> — whether writing "5" instead of "five," adding a newline, or changing capitalization swings the output. Both instruction-following and robustness track overall model strength, which yields a practical shortcut: <strong>a stronger model often saves you days of prompt-tweaking.</strong></p>
+
+  <h2>2. In-context learning: teaching without training</h2>
+  <p>The foundational idea: a model can learn a desired behavior <em>from examples in the prompt alone</em>, no weight updates — this is <span class="keyterm">in-context learning</span>. Each example is a "shot":</p>
+  <table class="tbl">
+    <tr><td>Zero-shot</td><td>No examples — just the instruction.</td></tr>
+    <tr><td>Few-shot</td><td>Several examples in the prompt (five examples = 5-shot). Generally, more examples help — bounded by context length and cost.</td></tr>
+  </table>
+  <p>This is also a form of <strong>continual learning</strong>: to teach a model about a new library version, you don't retrain — you put the new info in its context, letting it answer beyond its training cutoff. One nuance worth carrying: as models get stronger, few-shot adds <em>less</em> over zero-shot for general tasks — but examples still matter a lot for <strong>domain-specific</strong> content the model rarely saw in training.</p>
+
+  <h2>3. System prompt vs. user prompt</h2>
+  <p>Most APIs split the prompt in two: the <span class="keyterm">system prompt</span> (think: the task description / role, set by you the developer) and the <span class="keyterm">user prompt</span> (the task, from the end user). A real-estate assistant might carry "You're an experienced real estate agent…" in the system prompt, and the uploaded disclosure + "How old is the roof?" in the user prompt.</p>
+  <div class="callout">
+    <span class="h">Two things a PM should know here</span>
+    <strong>(1) System prompts can genuinely boost performance</strong> — partly because they come first (models attend better to early instructions) and partly because models are often post-trained to prioritize them (which also helps resist prompt attacks — Unit 22). <strong>(2) Chat templates are a silent-failure trap</strong> — the model combines system + user prompts using an exact template defined by the model's makers. An extra newline or the wrong template can quietly degrade behavior while still looking "reasonable." If quality mysteriously drops, "print the final prompt and check the template" is a legitimate debugging step.
+  </div>
+
+  <h2>4. Context-length economics</h2>
+  <p>How much you can put in a prompt is capped by the model's <span class="keyterm">context length</span>. Windows have exploded (from ~1K tokens to millions), but two economic facts matter more than the ceiling:</p>
+  <table class="tbl">
+    <tr><td>Every token costs</td><td>APIs charge per input and output token, and longer outputs add latency (tokens are generated one at a time). "Be concise" is a cost-and-speed lever, not just style.</td></tr>
+    <tr><td>The middle gets lost</td><td>Models attend best to the <strong>beginning and end</strong> of a prompt, worst to the middle. The "needle in a haystack" test measures this by hiding a fact at various positions and checking recall. Put critical instructions at the edges.</td></tr>
+  </table>
+  <p>The takeaway: a bigger context window is not free capacity. If quality degrades as prompts grow, the fix is often to <em>shorten</em>, not stuff.</p>
+
+  <h2>5. The best-practices set</h2>
+  <p>These techniques work across a wide range of models and outlast the throwaway tricks ("offer the model a $300 tip"). This is the checklist to hold a team's prompt work against.</p>
+
+  <div class="bp"><span class="n">1</span><h4>Write clear, explicit instructions</h4><p>Remove ambiguity: state the exact scoring scale, whether "I don't know" is allowed, integer vs. fractional. Assign a <em>persona</em> to set perspective ("act as a first-grade teacher"). Give <em>examples</em> to pin down the response you want. Specify the <em>output format</em> precisely (JSON keys, no preambles) and use end markers for structured outputs so the model doesn't just continue your input.</p></div>
+
+  <div class="bp"><span class="n">2</span><h4>Provide sufficient context</h4><p>Like giving a student a reference text — supplying context improves answers and curbs hallucination (without it, the model falls back on unreliable internal knowledge). Either hand it the context or give it tools to fetch it (<em>context construction</em> — RAG, web search, Units 05/17). Restricting a model to <em>only</em> its context (for roleplay/grounding) is genuinely hard; prompting helps but doesn't guarantee it.</p></div>
+
+  <div class="bp"><span class="n">3</span><h4>Break complex tasks into simpler subtasks</h4><p>Decompose into chained prompts (e.g. classify intent → respond to that intent). Models handle simple instructions better, and decomposition adds real benefits: you can <em>monitor</em> and <em>debug</em> each step, <em>parallelize</em> independent ones, and write simpler prompts. Costs can even drop (smaller prompts, cheaper models for easy steps). The trade: more steps can raise perceived latency. One team's support prompt bloated past 1,500 tokens; decomposing it improved quality <em>and</em> cut cost.</p></div>
+
+  <div class="bp"><span class="n">4</span><h4>Give the model time to think</h4><p><em>Chain-of-thought</em> (CoT) — "think step by step" or supplying the steps — nudges systematic reasoning and reliably improves results (and reduces hallucination). <em>Self-critique</em> asks the model to check its own output. Both cost latency, since the model works through intermediate steps before the user sees a token.</p></div>
+
+  <div class="bp"><span class="n">5</span><h4>Iterate — and version — like code</h4><p>Prompting is back-and-forth; each model has quirks (numbers, roleplay, instruction placement). But iteration must be <em>systematic</em>: version your prompts, use an experiment-tracking tool, standardize eval metrics and data so you can compare, and <strong>evaluate each prompt against the whole system</strong> — a change can help a subtask yet hurt the end-to-end result.</p></div>
+
+  <h2>The distinction that is the whole point</h2>
+  <div class="callout">
+    <span class="h">Disciplined iteration vs. vibes</span>
+    <strong>Disciplined:</strong> one change at a time, versioned, measured against a fixed eval set, judged on whole-system impact. <strong>Vibes:</strong> ad-hoc edits in a playground, "looks better to me," no tracking, no rollback. When a team can't tell you whether their last prompt change helped <em>on the eval set</em>, they're doing vibes — and this connects straight back to Unit 06.
+  </div>
+  <div class="callout">
+    <span class="h">When "just fix the prompt" is right — and when it's a smell</span>
+    <strong>Right:</strong> the failure is genuinely instructional — ambiguous ask, missing format spec, no examples, needs decomposition or CoT. Cheap to try, so try it first. <strong>A smell:</strong> the prompt has already ballooned patching endless edge cases, the same fix keeps breaking elsewhere (whack-a-mole), or the real gap is missing <em>facts</em> (needs RAG) or wrong <em>behavior/format</em> (needs finetuning) — Unit 05's fork. "Add another line to the prompt" as a reflex is how prompts rot.
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Name a prompt's parts and explain in-context learning (zero- vs. few-shot) as learning without weight updates.</li>
+      <li>Explain what the system prompt buys you, and why chat-template mistakes cause silent failures.</li>
+      <li>Reason about context economics — per-token cost, latency, and the lost middle — instead of assuming more context is better.</li>
+      <li>Hold a team's prompt work to the five best practices, and insist on versioning + eval-based comparison.</li>
+      <li>Judge when "fix the prompt" is the right cheap move and when it's a smell pointing to RAG, finetuning, or decomposition.</li>
+    </ul>
+  </div>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 08 of 24 · Core sequence · Tag: <em>prototyping</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 09 — Designing the Eval Pipeline</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

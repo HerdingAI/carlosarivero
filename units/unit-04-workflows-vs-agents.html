@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 04 — Workflows vs. Agents: The Foundational Distinction — Signal / Noise</title>
+<meta name="description" content="The core architectural split — predefined code paths vs. the model directing itself — the five composable workflow patterns, and a checklist for when an agent is justified at all.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{
+    font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700;
+    letter-spacing:-.01em;
+  }
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  a:hover{border-bottom-color:var(--accent)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:30%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* two-way split */
+  .split{display:flex; gap:14px; margin:24px 0; flex-wrap:wrap}
+  .split .c{flex:1; min-width:250px; background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:16px 18px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .split .wf{border-top:4px solid #5c7a99}
+  .split .ag{border-top:4px solid #b4552d}
+  .split .c h4{margin:0 0 6px; font-size:1.08rem}
+  .split .c p{margin:0; font-size:14.5px; color:#555}
+  .split .c .tag{display:inline-block; margin-top:8px; font-size:12px; color:#888; font-weight:600}
+
+  /* augmented LLM */
+  .aug{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px;
+    margin:22px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:center}
+  .aug .core-n{background:var(--accent); color:#fff; border-radius:10px; padding:12px 18px; font-weight:700; font-size:15px}
+  .aug .plus{color:var(--muted); font-size:18px; font-weight:700}
+  .aug .cap{background:var(--accent-soft); border-radius:8px; padding:9px 14px; font-size:13.5px; font-weight:600; color:#7a3d22}
+
+  /* pattern cards */
+  .pat{border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:14px 0; background:var(--card)}
+  .pat h4{margin:0 0 3px; font-size:1.08rem; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .pat h4 .badge{font-size:11px; background:#5c7a99; color:#fff; border-radius:5px; padding:2px 7px; vertical-align:middle; margin-right:8px; letter-spacing:.04em}
+  .pat .flow{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; color:#7a3d22;
+    background:var(--code); border-radius:6px; padding:6px 10px; margin:8px 0; display:inline-block}
+  .pat p{margin:6px 0; font-size:14.5px; color:#444}
+  .pat .use{font-size:13.5px; color:#666}
+  .pat .use b{color:#444}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence</p>
+  <h1><span class="num">Unit 04</span> — Workflows vs. Agents: The Foundational Distinction</h1>
+  <p class="lead">The core architectural split — predefined code paths vs. the model directing itself — the five composable workflow patterns, and a checklist for when an agent is justified at all.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">architecture</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Never let a team build an agent where a workflow would do.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">The anchor for Unit 05 (the four-way pattern decision), Unit 10 (production architecture), and Unit 18 (agent internals).</div></div>
+  </div>
+
+  <h2>Why this unit is the architecture anchor</h2>
+  <p>You've decided a feature is worth building (Unit 03). The very next fork is <em>how</em> it's structured — and it's the fork teams most often get wrong, usually by reaching for an "agent" because it sounds powerful. The guiding principle here is blunt: <strong>find the simplest solution possible, and only add complexity when it demonstrably improves outcomes.</strong> For many applications, a single well-optimized model call with retrieval and good examples is enough. This unit gives you the vocabulary to hold a team to that discipline.</p>
+
+  <h2>1. The distinction that organizes everything</h2>
+  <p>"Agentic systems" is the umbrella. Underneath it sits one architectural line that matters more than any other:</p>
+
+  <div class="split">
+    <div class="c wf">
+      <h4>Workflows</h4>
+      <p>LLMs and tools orchestrated through <strong>predefined code paths</strong>. A human wrote the steps; the model fills in the hard parts.</p>
+      <span class="tag">→ Predictable, consistent, easier to debug</span>
+    </div>
+    <div class="c ag">
+      <h4>Agents</h4>
+      <p>Systems where the LLM <strong>dynamically directs its own process and tool use</strong>, keeping control of how it accomplishes the task.</p>
+      <span class="tag">→ Flexible, model-driven, higher cost &amp; risk</span>
+    </div>
+  </div>
+
+  <p>The trade is explicit: agentic systems buy better task performance with <strong>latency and cost</strong>. Workflows give predictability and consistency for well-defined tasks; agents earn their keep when you need flexibility and model-driven decisions at scale. That's the whole decision in one sentence — everything below is detail.</p>
+
+  <div class="callout">
+    <span class="h">The question to ask in the room</span>
+    When a team says "let's build an agent," ask: <em>"Can we predict the steps in advance?"</em> If yes, a workflow is simpler, cheaper, and more debuggable. "Agent" should be a conclusion you're forced into, not a starting point.
+  </div>
+
+  <h2>2. The building block: the augmented LLM</h2>
+  <p>Before any pattern, there's one primitive. Every box in every diagram below is this same thing — an LLM enhanced with augmentations it can actively drive: generating its own search queries, picking tools, deciding what to remember.</p>
+
+  <div class="aug">
+    <span class="core-n">LLM</span>
+    <span class="plus">+</span>
+    <span class="cap">Retrieval</span>
+    <span class="cap">Tools</span>
+    <span class="cap">Memory</span>
+  </div>
+  <p>Two things make this primitive good: augmentations <em>tailored</em> to your use case, and a clean, well-documented interface for the model to use them (one standard way to wire this up is the Model Context Protocol). For the rest of the unit, assume every model call already has these capabilities.</p>
+
+  <h2>3. The five workflow patterns</h2>
+  <p>These are composable building blocks, not a prescriptive menu — you shape and combine them. Knowing their shapes lets you read an architecture diagram and name what you're looking at.</p>
+
+  <div class="pat">
+    <h4><span class="badge">01</span>Prompt chaining</h4>
+    <div class="flow">step 1 → [gate] → step 2 → step 3</div>
+    <p>Decompose a task into a fixed sequence, each call processing the last one's output, with optional programmatic <em>gates</em> checking progress between steps.</p>
+    <p class="use"><b>Use when:</b> the task cleanly splits into fixed subtasks and you'll trade latency for accuracy. <b>E.g.</b> write an outline → check it → write the doc.</p>
+  </div>
+
+  <div class="pat">
+    <h4><span class="badge">02</span>Routing</h4>
+    <div class="flow">classify input → route to specialized path</div>
+    <p>Classify the input, then send it to a specialized follow-up. Separation of concerns lets each path use a focused prompt without one input type degrading another.</p>
+    <p class="use"><b>Use when:</b> distinct categories are better handled separately and classification is reliable. <b>E.g.</b> route support queries by type; route easy questions to a cheap model, hard ones to a capable one.</p>
+  </div>
+
+  <div class="pat">
+    <h4><span class="badge">03</span>Parallelization</h4>
+    <div class="flow">split → run simultaneously → aggregate</div>
+    <p>Run work in parallel, then combine. Two variants: <em>sectioning</em> (independent subtasks at once) and <em>voting</em> (same task several times for diverse outputs / higher confidence).</p>
+    <p class="use"><b>Use when:</b> subtasks parallelize for speed, or multiple perspectives raise confidence. <b>E.g.</b> one model answers while another screens for policy violations (a guardrail); several prompts vote on whether code is vulnerable.</p>
+  </div>
+
+  <div class="pat">
+    <h4><span class="badge">04</span>Orchestrator–workers</h4>
+    <div class="flow">orchestrator breaks down → delegates → synthesizes</div>
+    <p>A central LLM dynamically breaks a task into subtasks, delegates them to worker LLMs, and synthesizes the results. Looks like parallelization but the subtasks are <strong>not pre-defined</strong> — the orchestrator decides them from the input.</p>
+    <p class="use"><b>Use when:</b> you can't predict the subtasks in advance. <b>E.g.</b> a coding change touching an unknown number of files; multi-source research.</p>
+  </div>
+
+  <div class="pat">
+    <h4><span class="badge">05</span>Evaluator–optimizer</h4>
+    <div class="flow">generate → evaluate → refine → (loop)</div>
+    <p>One call generates, another evaluates and gives feedback, in a loop — mirroring how a writer iterates toward a polished draft.</p>
+    <p class="use"><b>Use when:</b> you have clear eval criteria and iteration measurably helps — specifically when articulated feedback improves the output <em>and</em> the model can produce that feedback. <b>E.g.</b> literary translation with an evaluator critiquing nuance.</p>
+  </div>
+
+  <div class="callout">
+    <span class="h">Note the ladder of autonomy</span>
+    Patterns 01–03 run on fixed, human-defined paths. Pattern 04 hands the <em>decomposition</em> to the model. Pattern 05 hands it a <em>loop with a stopping judgment</em>. Each step gives the model more control — and costs more predictability. Full agents are the end of this ladder, not a different thing.
+  </div>
+
+  <h2>4. Agents — and when they're justified</h2>
+  <p>An <span class="keyterm">agent</span> is, mechanically, "just an LLM using tools based on environmental feedback in a loop." It starts from a human command or discussion, then plans and operates independently — gaining <strong>ground truth</strong> from the environment at each step (tool results, code execution) to gauge progress, pausing for human checkpoints or on blockers, and stopping on completion or a cap (e.g. max iterations) to stay in control.</p>
+
+  <table class="tbl">
+    <tr><th>Agents fit when…</th><th>The cost you accept</th></tr>
+    <tr><td>The problem is open-ended and you can't predict the number of steps or hardcode the path.</td><td>Higher cost from many turns.</td></tr>
+    <tr><td>You can trust the model's decision-making in this environment.</td><td>Potential for <strong>compounding errors</strong> across steps.</td></tr>
+    <tr><td>The environment is trusted, and the task scales with autonomy.</td><td>Need for sandboxed testing and guardrails before production.</td></tr>
+  </table>
+
+  <p>Two domains where agents genuinely earn it — and notice the shared traits: both require <em>conversation and action</em>, have <em>clear success criteria</em>, enable <em>feedback loops</em>, and integrate <em>human oversight</em>:</p>
+  <table class="tbl">
+    <tr><td>Customer support</td><td>Conversational flow + tools to pull data and take actions (refunds, tickets); success is a measurable resolution — enough that some vendors charge only for successful resolutions.</td></tr>
+    <tr><td>Coding agents</td><td>Solutions are verifiable by automated tests, so the agent iterates on test feedback; the problem space is structured and output quality is objectively measurable. Human review still matters.</td></tr>
+  </table>
+
+  <div class="callout">
+    <span class="h">The checklist that prevents an expensive mistake</span>
+    Before greenlighting an agent, require yes to: <strong>(1)</strong> steps genuinely unpredictable, <strong>(2)</strong> clear success criteria, <strong>(3)</strong> a real feedback signal from the environment, <strong>(4)</strong> a trusted/sandboxed environment with guardrails, and <strong>(5)</strong> a stopping condition. Miss any, and a workflow is almost certainly the safer, cheaper build.
+  </div>
+
+  <h2>The three agent principles (for when you do build one)</h2>
+  <p>If a team clears the bar and builds an agent, hold them to three principles — each is a place a PM can ask a pointed question:</p>
+  <table class="tbl">
+    <tr><td>Maintain simplicity</td><td>Resist added complexity that doesn't demonstrably improve outcomes.</td></tr>
+    <tr><td>Prioritize transparency</td><td>Explicitly show the agent's planning steps, so its reasoning is inspectable.</td></tr>
+    <tr><td>Craft the agent-computer interface (ACI)</td><td>Invest in tool documentation and testing as much as you would a human interface — poorly designed tools are a leading source of agent errors.</td></tr>
+  </table>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>State the workflow-vs-agent distinction in one line — predefined paths vs. the model directing itself — and the cost/latency-for-performance trade behind it.</li>
+      <li>Recognize and name the five workflow patterns from an architecture diagram, and say which fits a given task.</li>
+      <li>Run the five-point checklist that decides whether an agent is justified — and default to "workflow" when any point fails.</li>
+      <li>Ask the three sharp questions (simplicity, transparency, ACI) of any agent proposal that does clear the bar.</li>
+    </ul>
+  </div>
+  <p>Deeper agent mechanics — tool design, planning, failure-mode budgeting, memory — are deferred to Unit 18, pulled in only when an agent project is actually greenlit.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 04 of 24 · Core sequence · Tag: <em>architecture</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 05 — The Four-Way Decision: Prompting vs. RAG vs. Finetuning vs. Agents</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

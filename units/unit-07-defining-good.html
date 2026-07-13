@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 07 — Defining "Good": Evaluation Criteria &amp; Model Selection — Signal / Noise</title>
+<meta name="description" content="Define domain-specific criteria (with cost and latency as first-class), run a defensible model-selection workflow, decide build-vs-buy, and understand why public benchmarks mislead.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --eval:#6b4d8a; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* four criteria buckets */
+  .buckets{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:24px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .buckets .b{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:15px 17px; border-top-width:4px}
+  .buckets .b h4{margin:0 0 5px; font-size:1.05rem}
+  .buckets .b p{margin:0; font-size:14px; color:#555}
+  .buckets .b .ex{display:block; margin-top:7px; font-size:12.5px; color:#888; font-style:italic}
+  .buckets .d1{border-top-color:#5c8a5c} .buckets .d2{border-top-color:#5c7a99}
+  .buckets .d3{border-top-color:#c99a3b} .buckets .d4{border-top-color:#b4552d}
+  @media (max-width:600px){.buckets{grid-template-columns:1fr}}
+
+  /* workflow funnel */
+  .funnel{margin:24px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .funnel .st{background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:13px 16px; margin:0 auto 8px; position:relative}
+  .funnel .st .n{position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    background:var(--accent); color:#fff; width:26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px}
+  .funnel .st .txt{margin-left:38px}
+  .funnel .st h4{margin:0 0 2px; font-size:.98rem}
+  .funnel .st p{margin:0; font-size:13.5px; color:#555}
+  .funnel .s1{width:100%} .funnel .s2{width:88%} .funnel .s3{width:76%} .funnel .s4{width:64%}
+  @media (max-width:600px){.funnel .st{width:100%!important}}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence &nbsp;·&nbsp; Eval Thread (supporting)</p>
+  <h1><span class="num">Unit 07</span> — Defining "Good": Evaluation Criteria &amp; Model Selection</h1>
+  <p class="lead">Define domain-specific criteria (with cost and latency as first-class), run a defensible model-selection workflow, decide build-vs-buy, and understand why public benchmarks mislead.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">evals</span><span class="pill">framing</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Own the "which model, and how do we know it's good enough?" decision with a defensible process instead of leaderboard-chasing.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">Placed before prompting (Unit 08) on purpose — know the target before the levers. Feeds Unit 08 and Unit 09 (this becomes a full pipeline).</div></div>
+  </div>
+
+  <h2>Why "define good" comes before "make it good"</h2>
+  <p>Unit 06 argued that evals are the whole game. This unit answers the prerequisite question: <strong>good at what, and measured how?</strong> It sits deliberately <em>before</em> prompting — you should know the target you're optimizing toward before you learn the levers to hit it. The payoff is being able to answer, with a straight face, "which model and how do we know it's good enough?" — not by pointing at a leaderboard, but with a process you can defend.</p>
+
+  <h2>1. Evaluation-driven development</h2>
+  <p>The worst outcome isn't an app that never ships — it's one that's <em>deployed but nobody knows if it works</em>. It costs to run, and might cost even more to take down. Apps with murky ROI are common precisely because teams didn't define how they'd be evaluated up front.</p>
+  <div class="callout">
+    <span class="h">Evaluation-driven development</span>
+    Borrowed from test-driven development: <strong>define your evaluation criteria before you build.</strong> It's why the enterprise apps that reliably reach production are the ones with clear criteria — recommenders (engagement), fraud detection (money saved), coding (functional correctness). One caution: don't <em>only</em> chase easily-measured use cases, or you're "looking for the key under the lamppost." Some game-changing applications are hard to evaluate — building reliable eval pipelines is what unlocks them.
+  </div>
+
+  <h2>2. The four buckets of criteria</h2>
+  <p>Every AI application should start with a list of criteria specific to it. They fall into four buckets. Picture summarizing a legal contract: each bucket answers a different "is it good?" question.</p>
+
+  <div class="buckets">
+    <div class="b d1"><h4>Domain-specific capability</h4><p>Can the model do the task at all? Bounded by its training data and size — a model that never saw Latin can't translate it.</p><span class="ex">Does it understand legal contracts?</span></div>
+    <div class="b d2"><h4>Generation capability</h4><p>Is the output well-formed and trustworthy? Includes factual consistency and safety (the metrics that matter most now).</p><span class="ex">Is the summary coherent and faithful?</span></div>
+    <div class="b d3"><h4>Instruction-following</h4><p>Does it do what you asked, in the form you asked? A model can understand the task yet ignore your format.</p><span class="ex">Did it honor the length limit?</span></div>
+    <div class="b d4"><h4>Cost &amp; latency</h4><p>Can you afford it, and is it fast enough? A first-class criterion, not an afterthought.</p><span class="ex">How much, and how long to wait?</span></div>
+  </div>
+
+  <h3>Domain-specific capability — can it do the job?</h3>
+  <p>Evaluated with domain benchmarks and <em>exact evaluation</em> where possible. Coding uses <strong>functional correctness</strong> (does the code run and pass tests) — though you may also care about efficiency, cost, and readability. Non-coding capabilities are often tested with <strong>multiple-choice questions</strong>, because close-ended outputs are easy to verify and reproduce (the reason most public benchmarks lean on them).</p>
+
+  <h3>Generation capability — is the output trustworthy?</h3>
+  <p>Old NLG metrics like <em>fluency</em> and <em>coherence</em> matter less now that models write near-human text (still useful for weak models or creative/low-resource work). The pressing modern metrics:</p>
+  <table class="tbl">
+    <tr><td>Factual consistency</td><td>Checked two ways: <strong>local</strong> (does the output match a provided context — critical for summarization, support bots, analysis) and <strong>global</strong> (does it match open-world knowledge — for general chat, fact-checking). It's far easier to verify against explicit context than open knowledge; the hardest part is often deciding <em>what the facts even are</em>.</td></tr>
+    <tr><td>Safety</td><td>Umbrella for toxicity and bias — inappropriate content, harmful instructions, hate speech, violence, stereotypes, ideological slant. Detectable via general AI judges or smaller specialized classifiers.</td></tr>
+  </table>
+  <p>These two are examples — you'll define your own (conciseness, friendliness, controversiality, whatever your product needs) using the same techniques.</p>
+
+  <h3>Instruction-following — does it obey?</h3>
+  <p>If the model is bad at following instructions, it won't matter how good your instructions are. A model can have the domain capability (correctly reads tweet sentiment) yet fail instruction-following (outputs <code>HAPPY</code>/<code>ANGRY</code> when you asked for <code>POSITIVE</code>/<code>NEGATIVE</code>). More powerful models are generally better at this.</p>
+
+  <h3>Cost &amp; latency — first-class, not footnote</h3>
+  <p>A model that's excellent but too slow or expensive is useless; many teams knowingly choose lower quality for better cost and latency. This is <strong>Pareto optimization</strong> — multiple objectives at once. The discipline: be explicit about what you <em>can't</em> compromise on. If latency is non-negotiable, filter out every model that misses your latency bar first, then pick the best of what remains.</p>
+  <div class="callout">
+    <span class="h">Must-have vs. nice-to-have</span>
+    Ask users if they want lower latency and nobody says no — but high latency is usually an annoyance, not a deal-breaker. Separate the two before you let a latency number veto an otherwise-great model. Note cost behaves differently by hosting: API cost per token is roughly flat as you scale; self-hosted cost per token <em>drops</em> at scale (fixed cluster, more throughput), so revisit build-vs-buy as volume grows.
+  </div>
+  <p>The output of this whole section is a concrete criteria table — each criterion with a metric, a benchmark or dataset, a <strong>hard requirement</strong>, and an <strong>ideal</strong>. That table is the target the rest of your work optimizes toward.</p>
+
+  <h2>3. The model-selection workflow</h2>
+  <p>You don't care which model is "best" — only which is best <em>for your application</em>. Selection recurs constantly (each adaptation technique triggers it again). First, separate two kinds of attributes:</p>
+  <table class="tbl">
+    <tr><td>Hard attributes</td><td>What you can't or won't change — license, training data, model size (provider decisions) or privacy/control (your policies). These shrink the candidate pool.</td></tr>
+    <tr><td>Soft attributes</td><td>What you can improve — accuracy, toxicity, factual consistency. Estimating how much you can improve them is judgment (one task jumped 20% → 70% just by splitting it in two; another stayed unusable after weeks).</td></tr>
+  </table>
+  <p>Note the same attribute can be hard or soft depending on context: latency is soft if you host the model and can optimize it, hard if someone else hosts it. Then run the four-step funnel:</p>
+
+  <div class="funnel">
+    <div class="st s1"><span class="n">1</span><div class="txt"><h4>Filter by hard attributes</h4><p>Drop models whose non-negotiables don't fit (license, privacy, hosting).</p></div></div>
+    <div class="st s2"><span class="n">2</span><div class="txt"><h4>Narrow with public info</h4><p>Use benchmarks and leaderboards to shortlist promising candidates, balancing quality/latency/cost.</p></div></div>
+    <div class="st s3"><span class="n">3</span><div class="txt"><h4>Experiment on your own pipeline</h4><p>Run <em>your</em> evals on the shortlist to find the real winner — the step that actually decides.</p></div></div>
+    <div class="st s4"><span class="n">4</span><div class="txt"><h4>Monitor in production</h4><p>Detect failures and collect feedback continuously (Unit 21).</p></div></div>
+  </div>
+  <p>The steps are iterative — a later step can overturn an earlier decision (you planned to self-host, but private evals show open models fall short, so you switch to an API).</p>
+
+  <h2>4. Build vs. buy: APIs or self-host?</h2>
+  <p>Since you won't train a foundation model from scratch, "build vs. buy" means <strong>commercial API vs. self-hosting an open model</strong> — and the answer prunes your candidate pool hard. It helps to know the "open" gradations:</p>
+  <table class="tbl">
+    <tr><td>Open weight</td><td>Weights are downloadable, but training data is <em>not</em> released.</td></tr>
+    <tr><td>Open model</td><td>Weights <em>and</em> training data are public — enables retraining, auditing, and deeper understanding.</td></tr>
+  </table>
+  <p>The trade-offs run along control, privacy, cost-at-scale, and the engineering burden of serving — which is why this is a question teams revisit more than once as they grow.</p>
+
+  <h2>5. Why public benchmarks mislead</h2>
+  <p>There are thousands of benchmarks, and leaderboards aggregate a handful into a ranking. Useful for a first-pass shortlist — but not to be trusted as the answer, for concrete reasons:</p>
+  <table class="tbl">
+    <tr><td>Thin coverage</td><td>Compute limits mean leaderboards include only a few benchmarks (some drop important-but-expensive ones). A handful can't represent a model's vast capabilities and failure modes.</td></tr>
+    <tr><td>Opaque selection</td><td>Different leaderboards pick different benchmarks with unclear rationale, so rankings don't compare cleanly. If they overlap only slightly, which do you believe?</td></tr>
+    <tr><td>Correlation</td><td>Two highly-correlated benchmarks add no information but can exaggerate biases in the aggregate score.</td></tr>
+    <tr><td>Saturation</td><td>As models improve, benchmarks saturate and get replaced — a moving target, and a sign yesterday's leaderboard win means little today.</td></tr>
+    <tr><td>Contamination</td><td>Models may have seen benchmark data in training, inflating scores in ways that won't hold on your real inputs.</td></tr>
+  </table>
+  <div class="callout">
+    <span class="h">The conclusion that sets up Unit 09</span>
+    Because public benchmarks can't be trusted to tell you what's best <em>for you</em>, you must build your own evaluation pipeline with prompts and metrics you control. Leaderboards narrow the field (step 2); your own evals decide (step 3). This is exactly why the next eval unit designs that pipeline.
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Insist on evaluation-driven development — criteria defined before building.</li>
+      <li>Break "is it good?" into the four buckets: domain capability, generation (factual consistency + safety), instruction-following, and cost &amp; latency.</li>
+      <li>Treat cost and latency as first-class criteria and separate must-haves from nice-to-haves via Pareto thinking.</li>
+      <li>Run the four-step selection funnel and split hard vs. soft attributes to make the model choice defensible.</li>
+      <li>Explain why a leaderboard ranking isn't a decision — and why your own pipeline (Unit 09) is.</li>
+    </ul>
+  </div>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 07 of 24 · Core sequence · Tags: <em>evals · framing</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 08 — Prompting as an Engineering Discipline</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

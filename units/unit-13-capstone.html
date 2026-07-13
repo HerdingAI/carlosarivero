@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 13 — Capstone (CORE checkpoint) — Signal / Noise</title>
+<meta name="description" content="Pick one real system your team is building or considering, and write the one-pager below. This is produced, not read — proof that the CORE pass gave you an operating model, not trivia.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:800px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+
+  /* worksheet sections */
+  .ws{background:var(--card); border:1px solid var(--line); border-radius:14px; margin:20px 0; overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .ws .hd{display:flex; align-items:center; gap:12px; padding:14px 18px; background:#f4f1ea; border-bottom:1px solid var(--line)}
+  .ws .hd .n{background:var(--accent); color:#fff; width:30px; height:30px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; flex:0 0 auto}
+  .ws .hd h3{margin:0; font-size:1.12rem; font-weight:700; flex:1}
+  .ws .hd .units{font-size:11.5px; font-weight:700; color:#fff; background:var(--core); border-radius:6px; padding:3px 9px; letter-spacing:.03em}
+  .ws .bd{padding:16px 18px}
+  .ws .prompt{font-size:14.5px; color:#444; margin:0 0 10px}
+  .ws .prompt b{color:var(--accent)}
+  .ws textarea{width:100%; min-height:80px; border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+    font-family:inherit; font-size:14px; color:#222; background:#fdfcfa; resize:vertical; line-height:1.5}
+  .ws textarea:focus{outline:2px solid rgba(180,85,45,.35); border-color:var(--accent)}
+  .ws .revisit{margin-top:10px; font-size:13px; color:#7a3d22; background:var(--accent-soft); border-radius:8px; padding:8px 12px}
+  .ws .revisit b{color:#b4552d}
+
+  /* example */
+  details.ex{background:#eef3ef; border:1px solid #cfe3d6; border-radius:10px; padding:4px 14px; margin:10px 0}
+  details.ex summary{cursor:pointer; font-family:-apple-system,BlinkMacSystemFont,sans-serif; font-size:13px; font-weight:700;
+    color:#2f6f4f; padding:8px 0}
+  details.ex p{font-size:13.5px; color:#3a5c3a; margin:6px 0 12px; line-height:1.5}
+  details.ex p b{color:#26512f}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  .toolbar{display:flex; gap:10px; margin:20px 0; flex-wrap:wrap; font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+  .toolbar button{border:1px solid var(--accent); background:var(--accent); color:#fff; border-radius:8px;
+    padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer}
+  .toolbar button.sec{background:#fff; color:var(--accent)}
+  .toolbar button:hover{opacity:.9}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+    .ws .hd{flex-wrap:wrap}
+  }
+  @media print{.toolbar{display:none} textarea{border:1px solid #ccc}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence &nbsp;·&nbsp; Checkpoint</p>
+  <h1><span class="num">Unit 13</span> — Capstone (CORE checkpoint)</h1>
+  <p class="lead">Pick one real system your team is building or considering, and write the one-pager below. This is produced, not read — proof that the CORE pass gave you an operating model, not trivia.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">framing</span><span class="pill">architecture</span><span class="pill">evals</span><span class="pill">production</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — checkpoint</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Prove the CORE pass produced an operating model. If you can't complete a section, that names the unit to revisit.</div></div>
+    <div class="row"><div class="lbl">Source</div><div class="val">None — this is produced, not read.</div></div>
+  </div>
+
+  <h2>How to use this</h2>
+  <p>Choose one concrete system — real or seriously considered. Fill each section below in a few sentences; aim for a single page total. The point isn't length, it's whether you can answer at all. <strong>Every section maps to specific CORE units; if you get stuck, the "revisit" note tells you exactly where to go back.</strong> Your typing stays in this page (nothing is uploaded); use <em>Print / Save PDF</em> to keep a copy.</p>
+
+  <div class="toolbar">
+    <button onclick="window.print()">Print / Save as PDF</button>
+    <button class="sec" onclick="if(confirm('Clear all fields?')){document.querySelectorAll('textarea').forEach(t=>t.value='');}">Clear all</button>
+  </div>
+
+  <div class="ws">
+    <div class="hd"><span class="n">0</span><h3>The system in one line</h3><span class="units">Units 01–03</span></div>
+    <div class="bd">
+      <p class="prompt">What is it, who's it for, and <b>why an AI feature at all</b>? Where does it sit on the risk/opportunity ladder, and is this build or buy? Is AI critical or complementary here?</p>
+      <textarea placeholder="e.g. An internal support assistant for our ops team. Opportunity play (productivity), build (uses our private runbooks). AI is complementary — humans still resolve tickets."></textarea>
+      <div class="revisit"><b>Can't answer?</b> Revisit Unit 01 (what layer you operate on), Unit 02 (non-determinism), Unit 03 (feasibility screen, build-vs-buy, human-in-the-loop).</div>
+    </div>
+  </div>
+
+  <div class="ws">
+    <div class="hd"><span class="n">1</span><h3>Architecture: which pattern, and why not the others?</h3><span class="units">Units 04–05</span></div>
+    <div class="bd">
+      <p class="prompt">Name the approach — prompting, RAG, finetuning, agent, or a workflow combining them — and defend it. <b>Is your gap facts or behavior? Are the steps predictable?</b> Say explicitly why you rejected the alternatives.</p>
+      <textarea placeholder="e.g. RAG over our runbooks + prompting. The gap is FACTS (private, changing docs), not behavior — so not finetuning. Steps are predictable (retrieve → answer), so a workflow, not an agent."></textarea>
+      <details class="ex"><summary>See a worked example</summary>
+        <p><b>System:</b> support assistant. <b>Choice:</b> workflow = routing → RAG → generate. <b>Why:</b> failures are information-based (needs current policy docs) → RAG, not finetuning. Steps are knowable in advance → workflow, not agent. Finetuning rejected (docs change weekly; would ossify). Agent rejected (no unpredictable multi-step planning; compounding-error risk not worth it).</p>
+      </details>
+      <div class="revisit"><b>Can't answer?</b> Revisit Unit 04 (workflow vs. agent + the 5-point agent checklist) and Unit 05 (the four-way decision tree, "facts vs. form").</div>
+    </div>
+  </div>
+
+  <div class="ws">
+    <div class="hd"><span class="n">2</span><h3>The eval plan</h3><span class="units">Units 06 · 07 · 09</span></div>
+    <div class="bd">
+      <p class="prompt">What does "good" mean here (2–3 criteria)? How is each measured, at which component? What's the usefulness threshold, and how does the key metric map to business impact? Which eval levels (unit tests / human&amp;model / A/B) run at what cadence?</p>
+      <textarea placeholder="e.g. Criteria: factual consistency (AI judge vs. retrieved docs), relevance (semantic similarity), safety (classifier). Component evals on retrieval + generation separately. Threshold: 90% factual → automate ~50% of tickets. L1 unit tests every change; L2 human review of 50/day; A/B once mature."></textarea>
+      <div class="revisit"><b>Can't answer?</b> Revisit Unit 06 (why evals, the three levels), Unit 07 (the four criteria buckets, usefulness threshold), Unit 09 (the 3-step pipeline: components → guideline → methods &amp; data).</div>
+    </div>
+  </div>
+
+  <div class="ws">
+    <div class="hd"><span class="n">3</span><h3>The production plan</h3><span class="units">Unit 10 (+08)</span></div>
+    <div class="bd">
+      <p class="prompt">Sketch the architecture boxes in order: context, guardrails (in/out), router/gateway, caches, any agent loop or write actions. For each, name the risk it addresses. Is prompting disciplined and versioned?</p>
+      <textarea placeholder="e.g. Query → input guardrail (PII mask) → gateway → retrieve context → generate → output guardrail (hallucination check, human handoff on low confidence). Exact cache on repeated policy questions (careful: no user-specific caching). No write actions v1. Prompts versioned, eval-tracked."></textarea>
+      <div class="revisit"><b>Can't answer?</b> Revisit Unit 10 (the 5-step architecture build-up + the question per box) and Unit 08 (disciplined, versioned prompting).</div>
+    </div>
+  </div>
+
+  <div class="ws">
+    <div class="hd"><span class="n">4</span><h3>Data &amp; cost risks</h3><span class="units">Units 11–12</span></div>
+    <div class="bd">
+      <p class="prompt">What data does this need (quality / coverage / quantity), and what's the annotation budget reality? Where's the latency and cost pressure — and does the token math even allow your target experience? Online or batch?</p>
+      <textarea placeholder="e.g. Data: eval set of ~200 sliced real tickets; annotation guideline is the bottleneck (reuse for finetuning later if needed). Cost/latency: online API, streaming; TTFT must be <1s; answers ~300 tokens so latency floor is fine. Watch per-ticket cost at scale."></textarea>
+      <div class="revisit"><b>Can't answer?</b> Revisit Unit 11 (quality/coverage/quantity, annotation budgeting) and Unit 12 (prefill/decode, TTFT/TPOT, the latency floor, online vs. batch).</div>
+    </div>
+  </div>
+
+  <div class="ws">
+    <div class="hd"><span class="n">5</span><h3>The one incisive question</h3><span class="units">Synthesis</span></div>
+    <div class="bd">
+      <p class="prompt">Given all of the above, what's the single sharpest question you'd put to your engineers about this system right now — the one whose answer most changes the plan?</p>
+      <textarea placeholder="e.g. 'What's our factual-consistency number on the hardest 20% of tickets, and what's the false-refusal rate of the handoff guardrail?'"></textarea>
+      <div class="revisit"><b>Stuck?</b> A good question usually targets the weakest link surfaced above — often the eval number behind a threshold, or a guardrail's blast radius.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="h">How to grade yourself</span>
+    A complete one-pager isn't about polish — it's about coverage. If any section is blank or hand-wavy, you've found a real gap in your operating model, and the "revisit" note is your remediation. Redo the named unit, then finish the section. This is the whole purpose of the checkpoint: it converts "I read it" into "I can actually reason about a system."
+  </div>
+
+  <h2>What passing looks like</h2>
+  <div class="qbox">
+    <strong>You've cleared the CORE pass when you can:</strong>
+    <ul>
+      <li>Justify one architecture pattern and say why the other three are wrong for this system.</li>
+      <li>State what "good" means, how it's measured per component, and what score makes it worth shipping.</li>
+      <li>Draw the production architecture and name the risk each box addresses.</li>
+      <li>Name the data and cost/latency risks concretely — including whether your target experience is physically possible.</li>
+      <li>Ask the one question that most changes the plan.</li>
+    </ul>
+  </div>
+  <p>That's the operating model. From here the DEPTH units (14–24) are pulled in on demand — the eval thread continues at Unit 14, the highest-ROI unit in the series, which turns the traces your Unit 09 pipeline logs into systematic error analysis.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 13 of 24 · CORE checkpoint · Produced, not read · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 14 — Error Analysis &amp; the Improvement Flywheel</strong> (DEPTH, do early)</div>
+  </div>
+
+</div>
+</body>
+</html>

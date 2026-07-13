@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 10 — The Production Architecture, Assembled — Signal / Noise</title>
+<meta name="description" content="The five-step build-up of a real GenAI system — start with one model call, then add context, guardrails, a router/gateway, caches, and agent patterns, one problem at a time.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:30%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* architecture diagram */
+  .arch{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px;
+    margin:24px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; font-size:13px}
+  .arch .node{border-radius:8px; padding:9px 12px; font-weight:600; text-align:center; line-height:1.25}
+  .arch .user{background:#eceae4; color:#444}
+  .arch .guard{background:#eef3ef; border:1.5px solid #5c8a5c; color:#3a5c3a}
+  .arch .gate{background:#eef1f5; border:1.5px solid #5c7a99; color:#3a5069}
+  .arch .ctx{background:#faf2e8; border:1.5px solid #c99a3b; color:#8a6a1f}
+  .arch .model{background:var(--accent); color:#fff}
+  .arch .cache{background:#f3eef5; border:1.5px solid #6b4d8a; color:#4d3663}
+  .arch .arr{color:#aaa; font-weight:700; font-size:15px}
+  .arch .loop{flex-basis:100%; text-align:center; color:#b4552d; font-size:12px; font-weight:700; margin-top:4px}
+
+  /* step cards */
+  .stp{border:1px solid var(--line); border-radius:12px; padding:16px 18px 16px 54px; margin:14px 0; background:var(--card);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; position:relative; border-left-width:5px}
+  .stp .n{position:absolute; left:13px; top:16px; color:#fff; width:30px; height:30px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px}
+  .stp.c1{border-left-color:#c99a3b} .stp.c1 .n{background:#c99a3b}
+  .stp.c2{border-left-color:#5c8a5c} .stp.c2 .n{background:#5c8a5c}
+  .stp.c3{border-left-color:#5c7a99} .stp.c3 .n{background:#5c7a99}
+  .stp.c4{border-left-color:#6b4d8a} .stp.c4 .n{background:#6b4d8a}
+  .stp.c5{border-left-color:#b4552d} .stp.c5 .n{background:#b4552d}
+  .stp h4{margin:0 0 4px; font-size:1.1rem}
+  .stp p{margin:6px 0; font-size:14.5px; color:#555}
+  .stp .ask{font-size:13.5px; color:#7a3d22; background:var(--accent-soft); border-radius:7px; padding:7px 11px; margin-top:8px}
+  .stp .ask b{color:#b4552d}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence</p>
+  <h1><span class="num">Unit 10</span> — The Production Architecture, Assembled</h1>
+  <p class="lead">The five-step build-up of a real GenAI system — start with one model call, then add context, guardrails, a router/gateway, caches, and agent patterns, one problem at a time.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">production</span><span class="pill">architecture</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Read any architecture diagram an engineer shows you — know what each box does and what question to ask about it.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">The convergence point of Units 04, 05, and 08. Monitoring and the feedback loop extend it in Unit 21.</div></div>
+  </div>
+
+  <h2>Why this unit is the convergence point</h2>
+  <p>Everything so far — workflows vs. agents (04), the four patterns (05), prompting (08) — becomes concrete boxes on a diagram here. The key insight is <em>how</em> the architecture is built: not designed all at once, but <strong>grown one component at a time, each added to solve a specific problem.</strong> Learn the progression and you can read any real system's diagram, name every box, and ask the one question that matters about each. Start from the simplest possible thing:</p>
+
+  <div class="arch">
+    <span class="node user">User query</span>
+    <span class="arr">→</span>
+    <span class="node model">Model API</span>
+    <span class="arr">→</span>
+    <span class="node user">Response</span>
+  </div>
+  <p>No context, no guardrails, no optimization. Every step below is a response to a problem this bare version has. (Follow the order that fits your app — it's a common progression, not a law.)</p>
+
+  <h2>The five steps</h2>
+
+  <div class="stp c1"><span class="n">1</span>
+    <h4>Enhance context</h4>
+    <p>Give the model the information it needs per query — via retrieval (text, image, tabular / RAG) and tools that gather info through APIs (web search, weather, internal data). This is feature engineering for foundation models, and it's the single biggest lever on output quality.</p>
+    <p class="ask"><b>Ask:</b> Where does the model's knowledge come from for a given query — and do providers' upload/tool limits constrain us?</p>
+  </div>
+
+  <div class="stp c2"><span class="n">2</span>
+    <h4>Add guardrails</h4>
+    <p>Protect the system and users wherever there's risk, on both sides:</p>
+    <p><strong>Input guardrails</strong> — stop private data leaking to external APIs (detect &amp; mask PII, e.g. <code>[PHONE NUMBER]</code>, then unmask on the way back) and block malicious prompts (Unit 22). <strong>Output guardrails</strong> — catch failures (malformed JSON, hallucination, toxicity, brand risk, private-data leaks) and set a policy: <em>retry</em> (works because output is probabilistic; parallel retries keep latency down), or <em>fall back to a human</em> (on anger, keywords, or too many turns).</p>
+    <p class="ask"><b>Ask:</b> What failure modes do we catch, and what's the policy for each? And watch the <b>false-refusal rate</b> — a system too secure blocks legitimate requests. Note the reliability-vs-latency trade: guardrails add latency and don't play well with streaming.</p>
+  </div>
+
+  <div class="stp c3"><span class="n">3</span>
+    <h4>Add a model router and gateway</h4>
+    <p><strong>Router</strong> — instead of one model for everything, an intent classifier sends each query to the right destination: specialized models (better), cheap models for simple queries (cheaper), stock replies for out-of-scope asks (no API call wasted), or a clarifying question for ambiguous ones. Routers must be small, fast, and cheap. <strong>Gateway</strong> — a unified, secure interface to all your models: one place to change when an API changes, plus centralized access control, cost limits, logging, and fallback when an API fails or rate-limits.</p>
+    <p class="ask"><b>Ask:</b> How are queries routed, and does the gateway give us one control point for keys, cost, and failover? (Common flow: route → retrieve → generate → score.)</p>
+  </div>
+
+  <div class="stp c4"><span class="n">4</span>
+    <h4>Add caches</h4>
+    <p>Cut latency and cost by reusing past work. <strong>Exact caching</strong> — reuse only on identical requests (great for multi-step or slow actions like retrieval/SQL); needs an eviction policy (LRU/LFU/FIFO) and a rule for what not to cache (user-specific or time-sensitive queries). <strong>Semantic caching</strong> — reuse for <em>similar</em> queries via embeddings + a similarity threshold; higher hit rate but fragile (depends on good embeddings, vector search, threshold tuning) and can return wrong answers.</p>
+    <p class="ask"><b>Ask:</b> What's cached, and how do we prevent a <b>cache leak</b>? (A personalized answer wrongly cached as generic can serve one user's private data to another.)</p>
+  </div>
+
+  <div class="stp c5"><span class="n">5</span>
+    <h4>Add agent patterns</h4>
+    <p>Move beyond a straight-line flow to loops, parallelism, and branching (Unit 04). The system can feed a response back in to retrieve more and try again, and — most consequentially — take <strong>write actions</strong> (send an email, place an order, move money) that change the real world. Write actions make a system far more capable and far more dangerous; grant them with the utmost care.</p>
+    <p class="ask"><b>Ask:</b> Does this system have write actions — and what's the blast radius if one fires wrongly? Every loop and write is a new failure mode to debug.</p>
+  </div>
+
+  <div class="arch">
+    <span class="node user">Query</span>
+    <span class="arr">→</span>
+    <span class="node guard">Guardrails</span>
+    <span class="arr">→</span>
+    <span class="node gate">Router / Gateway</span>
+    <span class="arr">→</span>
+    <span class="node ctx">Context</span>
+    <span class="arr">→</span>
+    <span class="node model">Model</span>
+    <span class="arr">→</span>
+    <span class="node cache">Cache</span>
+    <span class="arr">→</span>
+    <span class="node guard">Guardrails</span>
+    <span class="arr">→</span>
+    <span class="node user">Response</span>
+    <span class="loop">↺ agent loop: response can feed back in · model can take write actions</span>
+  </div>
+
+  <div class="callout">
+    <span class="h">The PM's read on any architecture diagram</span>
+    You don't need to design this — you need to <em>interrogate</em> it. For each box: <em>context</em> → where does knowledge come from? <em>guardrails</em> → what's caught and what's the false-refusal cost? <em>router/gateway</em> → how are queries routed and controlled? <em>cache</em> → what's reused and could it leak? <em>agent loop/writes</em> → what can it change in the world? Complexity solves more tasks but multiplies failure modes — every added box is a new place to debug.
+  </div>
+
+  <h2>The through-line: complexity is earned, not assumed</h2>
+  <p>Notice the discipline baked into the progression — it's the same message as Unit 04. Each component exists because the previous architecture had a concrete problem. A team that starts at step 5 (agents, write actions) without earning steps 1–4 has built something powerful, unobservable, and hard to trust. The right question at the start of any build is not "how sophisticated can we make this?" but "what's the simplest architecture that meets the bar, and what problem forces the next box?"</p>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Name every box in a production GenAI architecture and the problem it solves.</li>
+      <li>Ask the sharp question per component — knowledge source, failure policy + false-refusal rate, routing/control, cache-leak risk, write-action blast radius.</li>
+      <li>Recognize the reliability-vs-latency trade in guardrails and the fragility of semantic caching.</li>
+      <li>Push back when complexity is added before it's earned — and see how each box multiplies failure modes.</li>
+    </ul>
+  </div>
+  <p>Two pieces are deliberately held for Unit 21: <em>monitoring/observability</em> (which should be designed in, not bolted on) and the <em>user-feedback loop</em> that turns production traffic into improvement.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 10 of 24 · Core sequence · Tags: <em>production · architecture</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 11 — Data Curation: The Unsexy Blocker</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

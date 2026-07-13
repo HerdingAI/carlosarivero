@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 05 — The Four-Way Decision: Prompting vs. RAG vs. Finetuning vs. Agents — Signal / Noise</title>
+<meta name="description" content="Just enough of each pattern to tell them apart — and combined with Unit 04, a working decision tree for 'why this approach and not the alternatives?'">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{
+    font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700;
+    letter-spacing:-.01em;
+  }
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  a:hover{border-bottom-color:var(--accent)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* four cards */
+  .four{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:24px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .four .c{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:15px 17px}
+  .four .c h4{margin:0 0 5px; font-size:1.05rem}
+  .four .c .lv{font-size:11.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#fff;
+    border-radius:5px; padding:2px 8px; display:inline-block; margin-bottom:8px}
+  .four .c p{margin:0; font-size:14px; color:#555}
+  .four .p1 .lv{background:#5c8a5c} .four .p2 .lv{background:#5c7a99}
+  .four .p3 .lv{background:#c99a3b} .four .p4 .lv{background:#b4552d}
+  @media (max-width:600px){.four{grid-template-columns:1fr}}
+
+  /* decision tree */
+  .tree{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 22px;
+    margin:24px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tree .q{font-weight:700; font-size:15px; margin:0 0 4px; color:var(--ink)}
+  .tree .step{border-left:3px solid var(--line); padding:4px 0 4px 16px; margin:0 0 4px 4px}
+  .tree .a{font-size:14px; color:#555; margin:2px 0}
+  .tree .a b{color:var(--accent)}
+  .tree .lead-in{font-size:13.5px; color:#888; margin:0 0 12px}
+
+  /* heuristic banner */
+  .heur{display:flex; gap:14px; margin:24px 0; flex-wrap:wrap}
+  .heur .h{flex:1; min-width:230px; border-radius:12px; padding:16px 18px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .heur .fact{background:#eaf1ec; border:1px solid #cfe3d6}
+  .heur .form{background:var(--accent-soft); border:1px solid #e7cdbc}
+  .heur .h .t{font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin:0 0 6px}
+  .heur .fact .t{color:#2f6f4f} .heur .form .t{color:#b4552d}
+  .heur .h p{margin:0; font-size:14.5px; color:#444}
+  .heur .h .big{font-size:1.05rem; font-weight:700; color:var(--ink); display:block; margin-bottom:4px}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence</p>
+  <h1><span class="num">Unit 05</span> — The Four-Way Decision: Prompting vs. RAG vs. Finetuning vs. Agents</h1>
+  <p class="lead">Just enough of each pattern to tell them apart — and combined with Unit 04, a working decision tree for "why this approach and not the alternatives?"</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">architecture</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Hear an engineer's architecture proposal and ask one incisive question about why <em>this</em> pattern over the alternatives.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">Builds on Unit 04 into a decision tree. Deep nuance of each pattern is deferred to Units 17 (RAG), 18 (agents), 19 (finetuning).</div></div>
+  </div>
+
+  <h2>Why this unit pairs with Unit 04</h2>
+  <p>Unit 04 split the world into workflows vs. agents by <em>control flow</em>. This unit cuts a different way — by <em>how you give the model what it's missing</em>. Together they form the decision tree you'll apply to almost every AI feature. The goal here isn't to implement any of these four; it's to differentiate them well enough that when an engineer proposes one, you can ask the single question that exposes whether it's the right call.</p>
+
+  <h2>The four adaptation techniques at a glance</h2>
+  <p>All four are ways to close the gap between a general model and your specific task. They differ in what they change and how much they cost.</p>
+  <div class="four">
+    <div class="c p1"><span class="lv">Cheapest</span><h4>Prompting</h4><p>Adapt via instructions and context — no weight changes. Where you always start.</p></div>
+    <div class="c p2"><span class="lv">Add data</span><h4>RAG</h4><p>Retrieve relevant external info per query and feed it in. Gives the model <em>facts</em> it lacks.</p></div>
+    <div class="c p3"><span class="lv">Change weights</span><h4>Finetuning</h4><p>Further-train the model on your data. Changes the model's <em>behavior</em> and form.</p></div>
+    <div class="c p4"><span class="lv">Most complex</span><h4>Agents</h4><p>Let the model plan and use tools in a loop to accomplish multi-step tasks.</p></div>
+  </div>
+
+  <h2>1. RAG — giving the model facts it doesn't have</h2>
+  <p><span class="keyterm">Retrieval-augmented generation</span> enhances a model's output by retrieving relevant information from an external memory source — an internal database, a user's past chats, or the internet — and feeding it into the prompt. The shape is two components:</p>
+  <table class="tbl">
+    <tr><td>Retriever</td><td>Pulls the information most relevant to the query from external memory. Its two jobs: <em>indexing</em> (processing data so it's fast to fetch later) and <em>querying</em> (fetching what's relevant now). <strong>The whole system's quality rides on the retriever.</strong></td></tr>
+    <tr><td>Generator</td><td>The model that writes the response using the retrieved information.</td></tr>
+  </table>
+  <p>The mental model: RAG <strong>constructs context specific to each query</strong> instead of stuffing the same context into every call — the foundation-model equivalent of feature engineering. Because it supplies relevant facts, it produces more detailed answers and <em>reduces hallucinations</em>. It also naturally handles per-user data (include a user's data only in that user's queries).</p>
+  <div class="callout">
+    <span class="h">"Won't long context kill RAG?"</span>
+    A question you'll hear. The answer is no, for two reasons worth knowing: (1) data always outgrows any context window — we generate far more than we delete; (2) a model given long context doesn't necessarily <em>use</em> it well — the longer the context, the more likely it fixes on the wrong part, and every extra token adds cost and latency. RAG feeds only the most relevant slice, which can both cut tokens and improve performance. <em>Rule of thumb: if your entire knowledge base is small enough to fit comfortably in the prompt, you may not need RAG at all.</em>
+  </div>
+
+  <h2>2. Agents — plan, act, observe, repeat</h2>
+  <p>An <span class="keyterm">agent</span> is anything that can <strong>perceive its environment and act upon it</strong> — defined by its environment and its set of actions. The actions are extended by the <em>tools</em> it can call. On this definition, familiar systems are already agents: a chatbot that can search the web and run code is one; a RAG system is one, with its retrievers and SQL executors as tools. The model is the brain: it processes the task and environmental feedback, plans a sequence of actions, and judges when the task is done — looping reason → act → observe until complete.</p>
+  <div class="callout">
+    <span class="h">Why agents need stronger (and pricier) models — the compounding-error math</span>
+    Agents take many steps, and accuracy multiplies. At 95% accuracy <em>per step</em>: 10 steps → ~60% overall; 100 steps → ~0.6%. Add <strong>higher stakes</strong> (tools let an agent do real damage), and you see why agents demand more capable models, sandboxing, and guardrails. This is the quantitative backbone of Unit 04's "default to a workflow."
+  </div>
+
+  <h2>3. Finetuning — changing the model's behavior</h2>
+  <p><span class="keyterm">Finetuning</span> continues training the model on your data, updating its weights. It's the heaviest lever, and the discipline around it is mostly about <em>restraint</em>.</p>
+  <table class="tbl">
+    <tr><th>Reasons to finetune</th><th>Reasons not to</th></tr>
+    <tr><td>Improve quality on a specific task the base model wasn't trained well for (e.g. an uncommon SQL dialect). Reliably produce a structured format. Mitigate bias with curated data. A small finetuned model can beat a much larger general one on its task, and be cheaper/faster to serve.</td><td>High up-front and ongoing cost: data, ML talent, serving, and a monitoring/update policy. It can <em>degrade</em> performance on other tasks. Base models improve so fast they may outrun your finetuned model. Most "prompting doesn't work" cases are really <em>unsystematic prompting</em>.</td></tr>
+  </table>
+  <div class="callout">
+    <span class="h">The order that matters</span>
+    Start with prompting, systematically — clear instructions, representative examples, defined metrics. Only when thorough prompting proves inadequate should you reach for RAG or finetuning. Beware the reflex that "general models can't do domain-specific tasks, so we must finetune" — as base models improve, they increasingly beat specialized ones. Prompting experiments also build the eval pipeline and data guidelines that finetuning will later depend on, so the effort is never wasted.
+  </div>
+
+  <h2>The heuristic that decides RAG vs. finetuning</h2>
+  <p>Once prompting is maxed out, the choice between RAG and finetuning comes down to <strong>what kind of failure you're seeing</strong>:</p>
+  <div class="heur">
+    <div class="h fact">
+      <p class="t">Information-based failure → RAG</p>
+      <span class="big">"RAG is for facts."</span>
+      <p>Outputs are factually wrong or outdated — the model lacks the info (private data) or has stale info. Give it the sources. For up-to-date questions, RAG reliably beats finetuning.</p>
+    </div>
+    <div class="h form">
+      <p class="t">Behavior-based failure → Finetuning</p>
+      <span class="big">"Finetuning is for form."</span>
+      <p>Outputs are correct but wrong in <em>kind</em> — irrelevant to the task, or in the wrong format (won't compile, wrong structure). Finetune on well-formed examples to fix the behavior.</p>
+    </div>
+  </div>
+  <p>These aren't mutually exclusive — real systems often combine prompting, RAG, and finetuning. But the facts-vs-form split is the fastest way to sort which lever a problem calls for.</p>
+
+  <h2>The decision tree (Units 04 + 05 combined)</h2>
+  <div class="tree">
+    <p class="lead-in">Walk top to bottom; stop at the first "yes." Simpler is better.</p>
+    <div class="step">
+      <p class="q">1. Can a single well-crafted prompt (with examples) do it?</p>
+      <p class="a"><b>Yes →</b> Prompting. Don't add complexity you can't justify.</p>
+    </div>
+    <div class="step">
+      <p class="q">2. Does it fail because it lacks facts (private / current info)?</p>
+      <p class="a"><b>Yes →</b> RAG. Information-based failure.</p>
+    </div>
+    <div class="step">
+      <p class="q">3. Does it fail on behavior/format that prompting + examples can't fix?</p>
+      <p class="a"><b>Yes →</b> Finetuning — but only after systematic prompting. Behavior-based failure.</p>
+    </div>
+    <div class="step">
+      <p class="q">4. Does the task need multi-step planning and tool use you can't predefine?</p>
+      <p class="a"><b>Yes →</b> Agent (clear Unit 04's five-point checklist first). <b>No / steps predictable →</b> a workflow.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="h">The one incisive question</span>
+    When a team proposes an approach, ask what it's <em>for</em>: "Is our problem missing <strong>facts</strong> or wrong <strong>behavior</strong>?" (RAG vs. finetuning) and "Are the steps <strong>predictable</strong>?" (workflow vs. agent). Most over-engineering dies on those two questions.
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Describe RAG as retriever + generator, and explain why it reduces hallucinations and survives long context.</li>
+      <li>Define an agent as perceive + act via tools, and cite the compounding-error math for why agents need stronger models.</li>
+      <li>Apply "RAG is for facts, finetuning is for form" to route a failure to the right lever.</li>
+      <li>Walk the combined decision tree and ask the two questions (facts-vs-form, predictable-vs-not) that justify a pattern.</li>
+    </ul>
+  </div>
+  <p>Each pattern's real depth — retrieval quality, agent failure-mode budgeting, finetuning mechanics — waits in Units 17, 18, and 19, to be pulled in when a live decision demands it.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 05 of 24 · Core sequence · Tag: <em>architecture</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 06 — Why Evals Are the Whole Game</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

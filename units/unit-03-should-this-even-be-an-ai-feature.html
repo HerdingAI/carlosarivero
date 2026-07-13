@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 03 — Should This Even Be an AI Feature? — Signal / Noise</title>
+<meta name="description" content="A feasibility screen you run before a single engineer-hour is spent: why you're building, what success means, how you'll get there, and how you'll keep it alive.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{
+    font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700;
+    letter-spacing:-.01em;
+  }
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  a:hover{border-bottom-color:var(--accent)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:30%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* crawl-walk-run */
+  .cwr{display:flex; gap:12px; margin:24px 0; flex-wrap:wrap}
+  .cwr .s{flex:1; min-width:180px; background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:15px 17px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; position:relative}
+  .cwr .s h4{margin:0 0 4px; font-size:1.02rem; color:var(--accent)}
+  .cwr .s p{margin:0; font-size:14px; color:#555}
+  .cwr .s .n{position:absolute; top:12px; right:14px; font-size:12px; color:#bbb; font-weight:700}
+  .cwr .s1{border-left:4px solid #9aa7b3}
+  .cwr .s2{border-left:4px solid #c99a3b}
+  .cwr .s3{border-left:4px solid #b4552d}
+
+  /* last mile bar */
+  .lastmile{background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:18px 20px; margin:24px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .lastmile .track{height:26px; border-radius:6px; overflow:hidden; display:flex; margin:12px 0 8px;
+    border:1px solid var(--line)}
+  .lastmile .easy{background:#cfe3d6; flex:0 0 60%; display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; color:#2f6f4f; font-weight:700}
+  .lastmile .hard{background:#f0d3c4; flex:1; display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; color:#b4552d; font-weight:700}
+  .lastmile .cap{font-size:13.5px; color:#555; margin:0}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence</p>
+  <h1><span class="num">Unit 03</span> — Should This Even Be an AI Feature?</h1>
+  <p class="lead">A feasibility screen you run <em>before</em> a single engineer-hour is spent: why you're building, what success means, how you'll get there, and how you'll keep it alive.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">framing</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Run a feasibility screen before committing engineering effort — and be willing to kill an idea at this stage.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">A deliberate zoom-out from <em>how the tech works</em> (01–02) to <em>whether to build at all</em>, before <em>which pattern</em> (04–05). Revisit after Units 07 (evals) and 10 (architecture) — your judgment sharpens once "good" and "buildable" get concrete.</div></div>
+  </div>
+
+  <h2>Why this unit sits here</h2>
+  <p>Units 01 and 02 were about how the technology behaves. This one steps back to the business question that should precede any of it: <strong>should you build this at all?</strong> It lands right after non-determinism (Unit 02) on purpose — you can't set honest expectations with stakeholders until you understand that the output won't always be the same or always be right. "It's easy to build a cool demo with foundation models. It's hard to create a profitable product." This unit is the screen that separates the two before you spend real money.</p>
+
+  <h2>1. Use-case evaluation: why are you building this?</h2>
+  <p>Building an AI feature, like most business decisions, is a response to <strong>risk or opportunity</strong>. Before scoping anything, place your motivation on this ladder — it determines urgency <em>and</em> whether you should build in-house at all:</p>
+  <table class="tbl">
+    <tr><th>Motivation</th><th>What it means for you</th></tr>
+    <tr><td>Existential threat</td><td>AI-native competitors could make you obsolete. Highest priority — and a reason to build <em>in-house</em> rather than hand the capability to a competitor. Common in document processing, financial analysis, insurance, and creative work.</td></tr>
+    <tr><td>Profit / productivity upside</td><td>The most common driver. Cheaper acquisition, better retention, faster support, lead-gen. Here you likely have plenty of <em>buy</em> options that beat building.</td></tr>
+    <tr><td>Don't-get-left-behind</td><td>Unsure where AI fits yet, but exploring is prudent if you can afford it (cue Kodak, Blockbuster, BlackBerry). Fits R&amp;D, not a product commitment.</td></tr>
+  </table>
+  <div class="callout">
+    <span class="h">The build-vs-buy fork</span>
+    Motivation decides the fork. If AI is existential, build in-house so you don't outsource your survival to a rival. If it's a productivity boost, a buy option is usually faster, cheaper, and better-performing. "Because it's cool" is not on the ladder.
+  </div>
+
+  <h3>The role of AI — and of humans — in the product</h3>
+  <p>How central AI is to the feature sets its quality bar. Three axes to classify any AI feature:</p>
+  <table class="tbl">
+    <tr><td>Critical vs. complementary</td><td>Does the app still work without AI? Face ID <em>is</em> AI; Gmail works without Smart Compose. The more critical AI is, the more accurate and reliable it must be — people forgive mistakes more when AI isn't core.</td></tr>
+    <tr><td>Reactive vs. proactive</td><td>Reactive responds to a user request (chatbot) and usually must be fast. Proactive shows up uninvited (traffic alerts) — latency matters less, but the <strong>quality bar is higher</strong> because low-quality proactive features feel intrusive.</td></tr>
+    <tr><td>Dynamic vs. static</td><td>Dynamic updates continually from feedback (per-user personalization, memory); static updates periodically with a shared model. Determines your maintenance and infra shape.</td></tr>
+  </table>
+  <p>Then pin down the <span class="keyterm">human-in-the-loop</span> question: does AI support a human, decide directly, or both? A support chatbot could (a) suggest responses agents reference, (b) handle only simple requests and route the rest, or (c) answer everything unaided. A useful way to stage that automation over time:</p>
+
+  <div class="cwr">
+    <div class="s s1"><span class="n">01</span><h4>Crawl</h4><p>Human involvement is mandatory. AI only generates suggestions.</p></div>
+    <div class="s s2"><span class="n">02</span><h4>Walk</h4><p>AI interacts directly with internal employees.</p></div>
+    <div class="s s3"><span class="n">03</span><h4>Run</h4><p>Increased automation, potentially including direct interaction with external users.</p></div>
+  </div>
+  <p>The role of humans <em>moves</em> as quality proves out. Start AI as a suggester; if agents accept, say, 95% of its suggestions verbatim on simple requests, graduate those requests to direct AI handling. The acceptance rate is your promotion signal.</p>
+
+  <h3>Defensibility: what stops a giant from copying you?</h3>
+  <p>The low barrier that lets you build also lets competitors build. Two threats specific to building <em>on top of</em> foundation models: (1) the platform can <strong>subsume</strong> you — a PDF-parsing app dies the day the base model parses PDFs well; (2) a giant can replicate a thin feature "with three engineers in two weeks." Three moats exist — <strong>technology, data, distribution</strong> — but with shared foundation models, tech converges and distribution favors incumbents. That leaves <span class="keyterm">data</span> as the realistic moat: get to market first, accumulate usage data, and let it compound into product improvements. (Calendly could've been a Google Calendar feature; Mailchimp a Gmail feature — first-mover usage data is how the small player wins.)</p>
+
+  <h2>2. Setting expectations: what does success look like?</h2>
+  <p>Once you've decided to build, define success <em>before</em> building. The most important metric is <strong>business impact</strong>, not model quality. For a support chatbot: what % of messages should it automate? How much more volume can you handle? How much faster do you respond? How much labor is saved? And because answering more messages doesn't mean happier users, track satisfaction alongside throughput.</p>
+  <div class="callout">
+    <span class="h">Set a usefulness threshold</span>
+    Define, up front, <em>how good it has to be to be worth shipping</em> — so nothing reaches customers before it's ready. The threshold spans several metric groups, and cost &amp; latency are first-class here, not afterthoughts:
+  </div>
+  <table class="tbl">
+    <tr><td>Quality</td><td>How good the responses are (the eval thread, Units 06–09, makes this concrete).</td></tr>
+    <tr><td>Latency</td><td><code>TTFT</code> (time to first token), <code>TPOT</code> (time per output token), total latency. "Acceptable" is relative — if humans currently answer in a median hour, anything faster may be plenty.</td></tr>
+    <tr><td>Cost</td><td>Cost per inference request.</td></tr>
+    <tr><td>Other</td><td>Interpretability, fairness, and similar, as the use case demands.</td></tr>
+  </table>
+  <p>If you can't name the exact metrics yet, that's fine — later units supply them. What matters now is committing to <em>having</em> a threshold.</p>
+
+  <h2>3. Milestone planning &amp; the last-mile trap</h2>
+  <p>With goals set, plan backward from where you actually start: <strong>evaluate off-the-shelf models first.</strong> If your goal is automating 60% of tickets and a stock model already does 30%, your remaining effort is far smaller than starting from zero. Expect goals to shift after evaluation — you may learn the cost to reach the threshold exceeds the return, and rightly kill the project. That is a successful outcome of this unit, not a failure.</p>
+
+  <div class="lastmile">
+    <p class="cap" style="margin-top:0"><strong>The last-mile challenge</strong> — initial success is misleading:</p>
+    <div class="track">
+      <div class="easy">0 → 60: a weekend</div>
+      <div class="hard">60 → 100: months to years</div>
+    </div>
+    <p class="cap">A good demo does not promise a good product. "The journey from 0 to 60 is easy; progressing from 60 to 100 becomes exceedingly challenging." One team hit 80% of the target experience in a month — then needed four more months to pass 95%, most of it spent on kinks and hallucinations.</p>
+  </div>
+
+  <div class="callout">
+    <span class="h">The number that kills roadmaps</span>
+    Because base models make the first 60% almost free, teams chronically underestimate the rest. Bake the last mile into your timeline: the demo that wowed leadership in week one is the <em>easy</em> part. This is the single most common way AI roadmaps slip.
+  </div>
+
+  <h2>4. Plan for maintenance from day one</h2>
+  <p>Planning doesn't stop at launch. AI products carry an extra burden: the field moves at a "bullet train" pace, and even <em>good</em> changes cause friction. A few forms the churn takes:</p>
+  <table class="tbl">
+    <tr><td>Shifting economics</td><td>Build in-house because it's cheaper, then providers halve prices in three months and in-house becomes the expensive option. Every tech investment needs an ongoing cost-benefit check.</td></tr>
+    <tr><td>Model swaps</td><td>APIs are converging, so swapping models is easier — but each model has quirks, so prompts, data, and workflows need retuning. Painful without versioning and evaluation infrastructure in place.</td></tr>
+    <tr><td>Regulation</td><td>Hard to adapt to. GDPR compliance was estimated at $9B across businesses; compute access can change overnight with new export laws.</td></tr>
+    <tr><td>IP risk</td><td>Potentially fatal. If your product is built on a model trained on others' data, can you be sure you own your output's IP? IP-heavy firms (e.g. game studios) hesitate for exactly this reason.</td></tr>
+  </table>
+  <p>You don't need answers to all of these now — you need to have <em>asked</em> them before committing, so maintenance isn't a surprise line item a year in.</p>
+
+  <h2>The feasibility screen, in one pass</h2>
+  <div class="qbox">
+    <strong>Before any engineer-hour, you can answer:</strong>
+    <ul>
+      <li><strong>Why?</strong> — Where does this sit on the risk/opportunity ladder, and does that imply build or buy?</li>
+      <li><strong>What role?</strong> — Critical or complementary, reactive or proactive, dynamic or static, and where on Crawl-Walk-Run does it start?</li>
+      <li><strong>What's the moat?</strong> — If you're selling it, what stops a platform from subsuming or replicating you? (Usually: data from getting there first.)</li>
+      <li><strong>What's success?</strong> — A business-impact metric plus a usefulness threshold across quality, latency, and cost.</li>
+      <li><strong>How far to go?</strong> — What do off-the-shelf models already deliver, and does the last mile fit the budget?</li>
+      <li><strong>How to maintain?</strong> — Which economic, model, regulatory, and IP changes could bite later?</li>
+    </ul>
+  </div>
+  <p>If a question has no answer, that's your signal to keep screening — or to pass. Killing an idea here is cheap; killing it after six months of engineering is not.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 03 of 24 · Core sequence · Tag: <em>framing</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 04 — Workflows vs. Agents: The Foundational Distinction</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

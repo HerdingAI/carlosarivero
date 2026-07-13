@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 11 — Data Curation: The Unsexy Blocker — Signal / Noise</title>
+<meta name="description" content="Data quality, coverage, and quantity — why 'we need better data' is the most common true diagnosis, what 'better' concretely means, and how to budget annotation realistically.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* three criteria cooking */
+  .three{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin:24px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .three .c{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:15px 16px; border-top-width:4px}
+  .three .c h4{margin:0 0 4px; font-size:1.02rem}
+  .three .c .cook{font-size:12px; color:#888; font-style:italic; display:block; margin-bottom:6px}
+  .three .c p{margin:0; font-size:13.5px; color:#555}
+  .three .q{border-top-color:#5c8a5c} .three .cv{border-top-color:#c99a3b} .three .qt{border-top-color:#5c7a99}
+  @media (max-width:600px){.three{grid-template-columns:1fr}}
+
+  /* six traits */
+  .traits{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:22px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .traits .t{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px}
+  .traits .t b{color:var(--accent); font-size:14.5px}
+  .traits .t p{margin:3px 0 0; font-size:13px; color:#555}
+  @media (max-width:600px){.traits{grid-template-columns:1fr}}
+
+  /* curve */
+  .curve{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin:22px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .curve svg{width:100%; height:auto; display:block}
+  .curve .cap{font-size:13.5px; color:#555; margin:10px 0 0}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence</p>
+  <h1><span class="num">Unit 11</span> — Data Curation: The Unsexy Blocker</h1>
+  <p class="lead">Data quality, coverage, and quantity — why "we need better data" is the most common true diagnosis, what "better" concretely means, and how to budget annotation realistically.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">data-cost</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Hold an informed conversation when data quality is blocking launch — and budget annotation work realistically.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">The synthesis and distillation options (generating data programmatically) are DEPTH Unit 20.</div></div>
+  </div>
+
+  <h2>Why the blocker is usually data</h2>
+  <p>When an AI feature stalls, "we need better data" is the most common diagnosis — and it's usually <em>true</em>. The problem is that "better" is vague, so the conversation goes nowhere. This unit makes "better" concrete. The right data makes a model more capable and safer; poor data actively increases bias and hallucination and wastes resources. Your job here isn't to curate data — it's to know what to ask when data is the thing standing between you and launch, and to budget the annotation work honestly instead of hand-waving it.</p>
+
+  <div class="callout">
+    <span class="h">The cooking analogy</span>
+    Training is cooking; data is the ingredients. <strong>Quality</strong> = are the ingredients fresh (not spoiled)? <strong>Coverage</strong> = is the mix right (not too much or too little of anything)? <strong>Quantity</strong> = do you have enough? All three matter, and more of one doesn't fix a deficit in another.
+  </div>
+
+  <div class="three">
+    <div class="c q"><h4>Quality</h4><span class="cook">fresh ingredients</span><p>Each example is good — relevant, consistent, correct.</p></div>
+    <div class="c cv"><h4>Coverage</h4><span class="cook">the right mix</span><p>The data spans the range of problems and phrasings you'll actually see.</p></div>
+    <div class="c qt"><h4>Quantity</h4><span class="cook">enough of it</span><p>Enough examples to learn — the amount depends heavily on the case.</p></div>
+  </div>
+
+  <h2>1. Quality — what "good data" concretely means</h2>
+  <p>The headline finding: <strong>a small amount of high-quality data beats a large amount of noisy data.</strong> Carefully curated instruction sets in the low thousands have matched or beaten datasets hundreds of times larger. "High quality" isn't a vibe — it's six checkable traits:</p>
+
+  <div class="traits">
+    <div class="t"><b>Relevant</b><p>Fits the task — a 19th-century legal corpus is wrong for today's law, right for legal history.</p></div>
+    <div class="t"><b>Aligned with requirements</b><p>Matches what the task needs — factual if it needs facts, concise if it needs brevity, with justifications if asked. (Not just "correct" — a correct answer may not be what's wanted.)</p></div>
+    <div class="t"><b>Consistent</b><p>Two annotators on the same example shouldn't diverge; inconsistency confuses the model. A clear guideline is what makes this possible.</p></div>
+    <div class="t"><b>Correctly formatted</b><p>Follows the expected format — strip HTML tags, trailing spaces, stray newlines, inconsistent casing.</p></div>
+    <div class="t"><b>Sufficiently unique</b><p>Duplicates introduce bias and contamination; how much duplication is tolerable depends on the use case.</p></div>
+    <div class="t"><b>Compliant</b><p>Respects internal and external policy — e.g. no PII if you're not permitted to train on it.</p></div>
+  </div>
+  <p>Curation isn't only about <em>adding</em> good data — it's also <strong>removing</strong> data to unlearn bad behavior. If a chatbot keeps tacking on unsolicited rewrites, the fix is to find and delete the training examples that model that habit, then add examples that don't.</p>
+
+  <h2>2. Coverage — the diversity you'll actually see</h2>
+  <p>Training data should span the range of problems, and phrasings, real users bring. Coverage is really <span class="keyterm">diversity</span>: if some users write long detailed prompts and others terse ones, include both; if queries often have typos, include typos; if you support several programming languages, cover them.</p>
+  <p>The diversity axes differ by application — a French→English tool needs no language diversity but benefits from diverse topics and styles; a global product bot needs linguistic and cultural diversity. And the best proof point: a model trained on data that's <strong>both high-quality and diverse</strong> beats the same model trained on data that's only one or the other. Two cautions — more <em>heterogeneous</em> data can sometimes hurt, and the right mix is the one that reflects real usage (or is found by experiment).</p>
+
+  <h2>3. Quantity — how much, really</h2>
+  <p>"How much data do I need?" is like "how much money do I need" — it varies enormously (models can learn from a single example; some finetunes use millions). Four factors set the answer:</p>
+  <table class="tbl">
+    <tr><td>Quality &amp; diversity</td><td>Better, more diverse data needs less of it.</td></tr>
+    <tr><td>Finetuning technique</td><td>Full finetuning wants far more data (tens of thousands+); lightweight methods work with a few hundred to a few thousand.</td></tr>
+    <tr><td>Task complexity</td><td>Sentiment classification needs far less than QA over financial filings.</td></tr>
+    <tr><td>Base model strength</td><td>The closer the base model already is, the fewer examples to close the gap.</td></tr>
+  </table>
+
+  <div class="curve">
+    <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" aria-label="Diminishing returns curve">
+      <line x1="50" y1="170" x2="570" y2="170" stroke="#ccc" stroke-width="1.5"/>
+      <line x1="50" y1="20" x2="50" y2="170" stroke="#ccc" stroke-width="1.5"/>
+      <text x="300" y="195" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#888">dataset size →</text>
+      <text x="20" y="95" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#888" transform="rotate(-90 20 95)">performance →</text>
+      <path d="M50,170 Q140,60 300,45 T570,35" fill="none" stroke="#b4552d" stroke-width="3"/>
+      <line x1="50" y1="170" x2="130" y2="92" stroke="#5c8a5c" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="150" y="80" font-family="sans-serif" font-size="11" fill="#5c8a5c">steep = doubling data helps a lot</text>
+      <text x="380" y="60" font-family="sans-serif" font-size="11" fill="#b4552d">plateau = doubling barely moves it</text>
+    </svg>
+    <p class="cap"><strong>Diminishing returns.</strong> The first 1,000 examples might add 10 points; the next 1,000, only 5. Train on 25% / 50% / 100% subsets and plot the slope to <em>estimate</em> how much more data buys.</p>
+  </div>
+
+  <div class="callout">
+    <span class="h">The practical move: start tiny</span>
+    Before committing budget to a big dataset, try a small, well-crafted set (~50 examples). Clear improvement suggests more data will help further; no improvement at all means a bigger set rarely will (though check hyperparameters and prompts before concluding). This small-first probe is how you de-risk a data investment cheaply — and it's the honest answer to "how much annotation should we fund?"
+  </div>
+
+  <h2>4. Acquisition &amp; annotation — where the real cost lives</h2>
+  <p>The single best data source is <strong>your own application data</strong> — it's perfectly relevant and matches the distribution you care about, which is nearly impossible to get elsewhere. Building a <span class="keyterm">data flywheel</span> that turns user activity and feedback into continual improvement is a durable advantage (and ties back to the moat in Unit 03). Before creating data, check public dataset marketplaces — but never fully trust them: inspect, validate, and <strong>always check the license</strong> (even a commercially-licensed set may contain sub-sources that aren't).</p>
+  <p>Real curation is mix-and-match: start from an existing set, prune low-quality instructions and responses, hand-write the missing responses, spot a thin topic, generate synthetic examples from templates, annotate those… and loop back when guidelines turn out wrong or annotations turn out incorrect. It is iterative and slow.</p>
+
+  <div class="callout">
+    <span class="h">The part everyone underestimates: annotation guidelines</span>
+    The hardest part of annotation usually isn't labeling — it's writing a clear <em>guideline</em>. What does a good response look like? Can it be correct yet unhelpful? What separates a 3 from a 4? Teams routinely report this as one of the toughest parts of the whole pipeline, and it's alarmingly common to abandon careful annotation halfway and hope the model figures it out. The good news: <strong>these are the same guidelines you built for evaluation in Unit 09</strong> — another reason that investment pays off twice.
+  </div>
+
+  <div class="callout">
+    <span class="h">Budgeting annotation, concretely</span>
+    Data quantity is bounded by what you can afford, not just what you need: a $10,000 annotation budget at $2/example caps you at 5,000 examples — and data spend competes with compute spend. When a team says "we need more data," the real question is: <em>how many examples, at what per-example annotation cost, and does the performance-gain slope justify it?</em> That's a fundable plan, not a wish.
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Translate "we need better data" into the three concrete axes — quality, coverage, quantity — and the six quality traits.</li>
+      <li>Recognize that curation includes <em>removing</em> data to unlearn bad behavior, not just adding good data.</li>
+      <li>Reason about how much data via the four factors, the diminishing-returns curve, and the small-first probe.</li>
+      <li>Name application data / the data flywheel as the best source, and check licenses on everything else.</li>
+      <li>Budget annotation realistically — cost per example, total budget, and the guideline work that's the real bottleneck.</li>
+    </ul>
+  </div>
+  <p>The tempting shortcut — "we'll just generate the training data" — is its own topic with its own risks, held for DEPTH Unit 20 (synthetic data &amp; distillation).</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 11 of 24 · Core sequence · Tag: <em>data-cost</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 12 — Cost &amp; Latency: The Two Constraints That Kill Roadmaps</strong></div>
+  </div>
+
+</div>
+</body>
+</html>

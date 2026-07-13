@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 02 — Why the Output Is Never the Same Twice — Signal / Noise</title>
+<meta name="description" content="Sampling and the probabilistic nature of AI — why identical inputs produce different outputs, and why this one fact reshapes testing, QA, user expectations, and sprint planning.">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  h1{
+    font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700;
+    letter-spacing:-.01em;
+  }
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  a:hover{border-bottom-color:var(--accent)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.core{background:var(--core); color:#fff}
+  .src{font-size:14px; color:#444}
+  .src code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  /* pipeline diagram */
+  .pipe{margin:26px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex; align-items:stretch; gap:0; flex-wrap:wrap}
+  .pipe .step{flex:1; min-width:120px; background:var(--card); border:1px solid var(--line);
+    padding:13px 14px; position:relative}
+  .pipe .step:first-child{border-radius:12px 0 0 12px}
+  .pipe .step:last-child{border-radius:0 12px 12px 0}
+  .pipe .step h4{margin:0 0 3px; font-size:.98rem; font-weight:700; color:var(--accent)}
+  .pipe .step p{margin:0; font-size:13px; color:#555; line-height:1.45}
+  .pipe .arrow{display:flex; align-items:center; color:var(--muted); font-size:20px; padding:0 2px}
+  @media (max-width:600px){.pipe{flex-direction:column} .pipe .step,.pipe .step:first-child,.pipe .step:last-child{border-radius:10px; margin-bottom:6px} .pipe .arrow{transform:rotate(90deg); justify-content:center}}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:30%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  .dial{display:flex; gap:14px; margin:22px 0; flex-wrap:wrap}
+  .dial .d{flex:1; min-width:220px; background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:15px 17px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .dial .d h4{margin:0 0 5px; font-size:1rem}
+  .dial .d p{margin:0; font-size:14px; color:#555}
+  .dial .lo{border-top:4px solid #5c7a99}
+  .dial .hi{border-top:4px solid #b4552d}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .footer a{color:var(--muted); border-bottom:none}
+  .footer a:hover{color:var(--accent)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Core Sequence</p>
+  <h1><span class="num">Unit 02</span> — Why the Output Is Never the Same Twice</h1>
+  <p class="lead">Sampling and the probabilistic nature of AI — why identical inputs produce different outputs, and why this one fact reshapes testing, QA, user expectations, and sprint planning.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">vocab</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill core">CORE — read in sequence</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Internalize non-determinism as the root cause behind almost every process change in this curriculum.</div></div>
+    <div class="row"><div class="lbl">Connects</div><div class="val">It's <em>why</em> Unit 03's expectation-setting is hard, <em>why</em> Unit 06's evals exist, and <em>why</em> the production/rollout units (10, 21) are harder than normal software.</div></div>
+  </div>
+
+  <h2>Why this unit is second</h2>
+  <p>Unit 01 established that a foundation model is a completion machine making <em>predictions based on probabilities</em>. This unit is where that sentence grows teeth. Ask an AI the same question twice and the answer can change — not because of a bug, but because of how the model chooses each word. That single property, <strong>non-determinism</strong>, is the hidden reason behind nearly every "why is AI different to ship?" question a PM faces. Almost everything downstream in this curriculum — evals, staged rollouts, feedback loops, guardrails — is an answer to a problem introduced here.</p>
+
+  <h2>1. How a model actually picks the next word</h2>
+  <p>To generate a token, the model doesn't "know" the answer — it computes a <span class="keyterm">probability distribution</span> over <em>every</em> token in its vocabulary, then picks one. Given "My favorite color is …", it might assign "green" 50%, "red" 30%, and a long tail to thousands of other words. The mechanics, in one line:</p>
+
+  <div class="pipe">
+    <div class="step"><h4>Logits</h4><p>The network emits a raw score for each token in the vocabulary.</p></div>
+    <div class="arrow">→</div>
+    <div class="step"><h4>Softmax</h4><p>Converts those scores into probabilities that sum to 1.</p></div>
+    <div class="arrow">→</div>
+    <div class="step"><h4>Sampling</h4><p>Picks one token <em>according to</em> those probabilities.</p></div>
+  </div>
+
+  <p>The crucial word is <em>sampling</em>. Always taking the single highest-probability token is <span class="keyterm">greedy sampling</span> — fine for a spam classifier, but it makes a language model boring, forever answering in the most common words. So instead the model samples <em>from the distribution</em>: if "red" has a 30% chance, it gets picked 30% of the time. That deliberate roll of the dice is the source of everything in this unit. You don't need the softmax math; you need the consequence: <strong>the model is designed to not always say the same thing.</strong></p>
+
+  <h2>2. The dials your engineers control</h2>
+  <p>Sampling isn't uncontrolled — there are a handful of <span class="keyterm">sampling variables</span> that shape how adventurous the output is. You won't set these, but you should know what they trade off, because "make it more consistent" and "make it more creative" are requests to move these dials in opposite directions.</p>
+
+  <table class="tbl">
+    <tr><th>Variable</th><th>What it does</th></tr>
+    <tr><td>Temperature</td><td>The master creativity dial. Higher (~0.7+) flattens the odds so rarer, more interesting tokens surface — creative but less coherent. Lower makes the model favor the obvious token — consistent but duller. <code>0</code> in practice means "always take the top token" (as consistent as it gets).</td></tr>
+    <tr><td>Top-k</td><td>Only consider the k most likely tokens (e.g. 50–500), then sample among those. Smaller k = more predictable, less interesting.</td></tr>
+    <tr><td>Top-p (nucleus)</td><td>Consider the smallest set of tokens whose probabilities add up to p (e.g. 0.9). Adapts the pool to context — narrow for "yes/no", wide for "meaning of life".</td></tr>
+    <tr><td>Stopping condition</td><td>Stop tokens / max length that end generation. Keeps latency and cost down — but stopping too early can cut off a sentence or break required formats like JSON.</td></tr>
+  </table>
+
+  <div class="dial">
+    <div class="d lo"><h4>↓ Low temperature</h4><p>Consistent, predictable, "boring." Good for extraction, classification, structured tasks where you want the same answer every time.</p></div>
+    <div class="d hi"><h4>↑ High temperature</h4><p>Creative, varied, occasionally incoherent. Good for brainstorming, drafts, ideation — anywhere variety is the point.</p></div>
+  </div>
+
+  <div class="callout">
+    <span class="h">Translate the dials into product language</span>
+    When an engineer says "we'll lower the temperature," hear: <em>"we're trading some creativity for more repeatable behavior."</em> When they say "bump it up," hear the reverse. If a stakeholder wants both maximum creativity <em>and</em> perfect consistency, these dials are why they can't have both at once — that tension is a product decision, not an engineering oversight.
+  </div>
+
+  <h2>3. The two costs of being probabilistic</h2>
+  <p>Because the model samples from "a world of possibilities," anything with non-zero probability — however wrong — can come out. This shows up as two distinct problems. Keeping them separate matters, because they have <em>different</em> fixes.</p>
+
+  <h3>Inconsistency</h3>
+  <p><span class="keyterm">Inconsistency</span> is the model giving very different responses to the same or barely-different prompts. A documented example: asking ChatGPT to score an essay gave 3/5 one run and 5/5 the next, same prompt. It comes in two flavors:</p>
+  <table class="tbl">
+    <tr><td>Same input → different output</td><td>Identical prompt, two different answers. The more tractable case.</td></tr>
+    <tr><td>Slightly different input → drastically different output</td><td>An accidental capital letter flips the response. Harder to tame.</td></tr>
+  </table>
+  <p>For the first case there are real mitigations: <strong>cache</strong> the answer so a repeated question returns the stored response; <strong>fix the sampling variables</strong> (temperature, top-p, top-k); and <strong>fix the seed</strong> (the starting point for the random-number generator). But note the honest caveat — even with all of that pinned, consistency isn't guaranteed 100% of the time, because the <em>hardware</em> executing the model can nudge outputs, and if you're on a provider API like OpenAI or Google, you don't control that hardware. The second case (tiny input change, huge output change) can't be fixed by these settings at all — it's addressed later with careful prompting (Unit 08) and memory systems.</p>
+
+  <div class="callout">
+    <span class="h">Why users care more than you'd think</span>
+    We expect consistency from anything we communicate with — "imagine a person giving you a different name every time you see them." Inconsistency isn't just a QA metric; it quietly erodes user trust. And fixing settings doesn't inspire trust either: it's like a teacher who only grades you consistently while sitting in one particular room.
+  </div>
+
+  <h3>Hallucination</h3>
+  <p><span class="keyterm">Hallucination</span> is a response not grounded in facts — the model stating something untrue as if it were real. It's fatal wherever factuality matters: in June 2023 a law firm was fined for submitting fictitious, ChatGPT-generated legal research to a court. Crucially, hallucination is <em>not</em> the same root cause as inconsistency. Inconsistency comes from sampling randomness; hallucination is more nuanced — the model can produce something seemingly never in its training data. Two leading hypotheses:</p>
+  <table class="tbl">
+    <tr><td>Self-delusion</td><td>The model can't distinguish the text <em>you</em> gave it from text <em>it</em> generated. Once it says "this person is an architect," it treats that as established fact and builds on it — "snowballing" into confidently wrong output.</td></tr>
+    <tr><td>Knowledge mismatch</td><td>During training the model was taught to imitate human labelers who used knowledge the model itself lacked — effectively training it to make things up to fill the gap.</td></tr>
+  </table>
+  <p>The practical upshot for you: hallucination can be <em>reduced</em> but not switched off. Partial levers include prompting the model to say "I don't know" when unsure, asking for concise answers (fewer tokens = fewer chances to invent), and — most importantly downstream — grounding it in real data via RAG (Units 05, 17) and catching failures via evals (Unit 06+). Even <em>detecting</em> a hallucination is hard, much like detecting when a person is lying.</p>
+
+  <div class="callout">
+    <span class="h">The reframe that makes AI great, not just risky</span>
+    The same probabilistic nature that causes hallucination is exactly what makes these models superb creative partners — brainstorming limitless ideas, generating never-before-seen designs. Non-determinism is a feature for creative tasks and a liability for factual ones. Which one your feature is determines how hard it will be to ship.
+  </div>
+
+  <h2>Why this reshapes how you work</h2>
+  <p>Hold this unit next to normal software, where the same input reliably yields the same output. Non-determinism breaks that assumption, and the fallout runs through the rest of the curriculum:</p>
+  <table class="tbl">
+    <tr><th>PM activity</th><th>What non-determinism changes</th></tr>
+    <tr><td>Testing / QA</td><td>You can't assert <code>output == expected</code>. "Passed once" doesn't mean "passes." This is the reason evals (Unit 06) exist as a discipline.</td></tr>
+    <tr><td>User expectations</td><td>Users assume consistency; the system won't always deliver it. Expectation-setting (Unit 03) is hard <em>because</em> of this.</td></tr>
+    <tr><td>Acceptance criteria</td><td>"Correct answer" becomes "acceptable distribution of answers" — you spec ranges and failure rates, not exact strings.</td></tr>
+    <tr><td>Rollout &amp; monitoring</td><td>A demo that worked can fail in production on the same input. Staged rollouts and live feedback loops (Units 10, 21) are the response.</td></tr>
+  </table>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Explain, in one breath, why the same prompt yields different answers — sampling from a probability distribution, not a lookup.</li>
+      <li>Name the sampling dials (<em>temperature, top-k, top-p, stopping</em>) and the consistency-vs-creativity trade they control — without needing to set them.</li>
+      <li>Distinguish <em>inconsistency</em> (sampling randomness, partly fixable with caching/seed/settings) from <em>hallucination</em> (ungrounded output, reducible but not eliminable) — and know they need different fixes.</li>
+      <li>Point to non-determinism as the reason a given process (QA, rollout, acceptance criteria) has to change — the thread you'll pull through Units 03, 06, 10, and 21.</li>
+    </ul>
+  </div>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 02 of 24 · Core sequence · Tag: <em>vocab</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong>Unit 03 — Should This Even Be an AI Feature?</strong></div>
+  </div>
+
+</div>
+</body>
+</html>
