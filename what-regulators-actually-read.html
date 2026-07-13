@@ -7,80 +7,79 @@
 <title>What regulators actually read in your model documentation — Signal / Noise</title>
 <style>
   :root{
-    --ink:#1a1a1a; --muted:#5b5b57; --faint:#8a8a84;
-    --bg:#fbfbf8; --rule:#e4e3dc; --accent:#2b4a6f; --accent-soft:#eef1f5;
-    --maxw:680px;
+    --ink:#1a1a1a; --muted:#5c5c5c; --faint:#9a968e;
+    --bg:#faf9f6; --rule:#e5e2dc; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f;
+    --maxw:700px;
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
   body{
     margin:0; background:var(--bg); color:var(--ink);
     font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
-    font-size:19px; line-height:1.62; letter-spacing:.002em;
+    font-size:18px; line-height:1.62;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
-  .nav-sans,.masthead,.meta,.callout-label,.tag,footer,.kicker{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .masthead,.meta,.callout-label,.tag,footer,.kicker,.metarow,h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   }
-  header.site{padding:34px 0 0}
   .masthead{
-    display:flex; justify-content:space-between; align-items:baseline; gap:16px;
-    font-size:14px; letter-spacing:.02em;
+    display:flex; justify-content:space-between; align-items:center; gap:16px;
+    border-bottom:1px solid var(--rule); padding-bottom:12px;
   }
-  .masthead a{color:var(--ink); text-decoration:none; font-weight:600}
-  .masthead .right a{color:var(--muted); font-weight:500; margin-left:16px}
-  .masthead a:hover{color:var(--accent)}
-  .breadcrumb{
-    margin-top:26px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
-    font-size:13.5px; color:var(--faint); letter-spacing:.01em;
-  }
-  .breadcrumb a{color:var(--muted); text-decoration:none}
-  .breadcrumb a:hover{color:var(--accent)}
-  article{padding:8px 0 40px}
+  .masthead a.brand{font-size:16px; font-weight:700; color:var(--ink); text-decoration:none; border-bottom:0}
+  .masthead .icons{display:flex; gap:14px; align-items:center}
+  .masthead .icons a{color:#5c5c5c; display:flex; border-bottom:0}
+  .masthead .icons a:hover{color:var(--accent)}
+  article{padding:0 0 40px}
   .kicker{
-    margin:40px 0 14px; font-size:12.5px; letter-spacing:.14em;
-    text-transform:uppercase; color:var(--faint);
+    margin:44px 0 10px; font-size:13px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--accent); font-weight:700;
   }
   h1{
-    font-size:38px; line-height:1.12; letter-spacing:-.01em;
-    margin:0 0 14px; font-weight:600;
+    font-size:34px; line-height:1.15; letter-spacing:-.01em;
+    margin:0; font-weight:700;
   }
-  .standfirst{font-size:21px; line-height:1.5; color:var(--muted); margin:0 0 26px}
+  .standfirst{font-size:17.5px; line-height:1.6; color:#333; margin:20px 0 0}
   .metarow{
-    display:flex; flex-wrap:wrap; gap:8px 18px; padding:14px 0 0; margin-bottom:6px;
+    display:flex; flex-wrap:wrap; gap:8px 18px; padding:14px 0 0; margin:20px 0 0;
     border-top:1px solid var(--rule);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
     font-size:12.5px; color:var(--faint); letter-spacing:.02em;
   }
   .metarow b{color:var(--muted); font-weight:600}
-  h2{font-size:24px; line-height:1.22; margin:42px 0 12px; font-weight:600; letter-spacing:-.005em}
+  h2{
+    font-size:12.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:44px 0 14px;
+    padding-bottom:8px; border-bottom:1px solid var(--rule);
+  }
   p{margin:0 0 20px}
-  a{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent-soft)}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
   a:hover{border-bottom-color:var(--accent)}
   em{font-style:italic}
-  strong{font-weight:650}
+  strong{font-weight:700}
   .callout{
-    margin:28px 0; padding:18px 22px; background:#fff;
-    border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:2px;
+    margin:28px 0; padding:18px 22px; background:var(--accent-soft);
+    border-left:4px solid var(--accent); border-radius:0 10px 10px 0;
   }
   .callout-label{
-    display:block; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase;
-    color:var(--accent); margin-bottom:6px; font-weight:650;
+    display:block; font-size:13px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:6px; font-weight:700;
   }
-  .callout p{margin:0; font-size:18px; color:var(--ink)}
-  table{border-collapse:collapse; width:100%; margin:26px 0; font-size:16.5px;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+  .callout p{margin:0; font-size:16px; color:var(--ink); line-height:1.55}
+  table{border-collapse:collapse; width:100%; margin:26px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   th,td{text-align:left; vertical-align:top; padding:11px 14px; border-bottom:1px solid var(--rule)}
-  th{color:var(--muted); font-weight:600; font-size:13px; letter-spacing:.02em;
-    text-transform:uppercase; border-bottom:1.5px solid var(--rule)}
+  th{color:var(--muted); font-weight:700; font-size:12.5px; letter-spacing:.06em;
+    text-transform:uppercase; border-bottom:1px solid var(--rule)}
   hr{border:0; border-top:1px solid var(--rule); margin:44px 0}
-  footer{padding:8px 0 60px; font-size:14px; color:var(--faint); letter-spacing:.01em}
-  footer a{color:var(--muted); text-decoration:none; border:0}
+  footer{margin-top:16px; padding-top:18px; border-top:2px solid var(--ink);
+    font-size:13px; color:var(--muted)}
+  footer a{color:var(--muted); text-decoration:none; border:0; font-weight:600}
   footer a:hover{color:var(--accent)}
-  .footer-links{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
-  @media (max-width:560px){
-    body{font-size:18px} h1{font-size:31px} .standfirst{font-size:19px}
+  .footer-links{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:baseline}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:28px} .standfirst{font-size:16.5px} .wrap{padding:36px 18px 72px}
   }
 </style>
 </head>
@@ -88,13 +87,12 @@
 <div class="wrap">
   <header class="site">
     <div class="masthead">
-      <a href="index.html">Signal / Noise</a>
-      <span class="right">
-        <a href="https://www.linkedin.com/in/carlosarivero/">LinkedIn</a>
-        <a href="https://github.com/HerdingAI">GitHub</a>
-      </span>
+      <a class="brand" href="index.html">Signal <span style="color:#b4552d">/</span> Noise</a>
+      <div class="icons">
+        <a href="https://www.linkedin.com/in/carlosarivero/" title="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z"></path></svg></a>
+        <a href="https://github.com/HerdingAI" title="GitHub"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.24c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.57 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.25 10.25 0 0 0 22 12.24C22 6.58 17.52 2 12 2z"></path></svg></a>
+      </div>
     </div>
-    <div class="breadcrumb"><a href="index.html">Signal / Noise</a> · <a href="thoughts.html">Thoughts</a></div>
   </header>
 
   <article>
