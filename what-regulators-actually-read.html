@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Most model documentation is written for auditors who will never read it. The parts that get read — and the parts that get you in trouble — are predictable.">
+<title>What regulators actually read in your model documentation — Signal / Noise</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5b5b57; --faint:#8a8a84;
+    --bg:#fbfbf8; --rule:#e4e3dc; --accent:#2b4a6f; --accent-soft:#eef1f5;
+    --maxw:680px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:19px; line-height:1.62; letter-spacing:.002em;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+  .nav-sans,.masthead,.meta,.callout-label,.tag,footer,.kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  header.site{padding:34px 0 0}
+  .masthead{
+    display:flex; justify-content:space-between; align-items:baseline; gap:16px;
+    font-size:14px; letter-spacing:.02em;
+  }
+  .masthead a{color:var(--ink); text-decoration:none; font-weight:600}
+  .masthead .right a{color:var(--muted); font-weight:500; margin-left:16px}
+  .masthead a:hover{color:var(--accent)}
+  .breadcrumb{
+    margin-top:26px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-size:13.5px; color:var(--faint); letter-spacing:.01em;
+  }
+  .breadcrumb a{color:var(--muted); text-decoration:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  article{padding:8px 0 40px}
+  .kicker{
+    margin:40px 0 14px; font-size:12.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--faint);
+  }
+  h1{
+    font-size:38px; line-height:1.12; letter-spacing:-.01em;
+    margin:0 0 14px; font-weight:600;
+  }
+  .standfirst{font-size:21px; line-height:1.5; color:var(--muted); margin:0 0 26px}
+  .metarow{
+    display:flex; flex-wrap:wrap; gap:8px 18px; padding:14px 0 0; margin-bottom:6px;
+    border-top:1px solid var(--rule);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-size:12.5px; color:var(--faint); letter-spacing:.02em;
+  }
+  .metarow b{color:var(--muted); font-weight:600}
+  h2{font-size:24px; line-height:1.22; margin:42px 0 12px; font-weight:600; letter-spacing:-.005em}
+  p{margin:0 0 20px}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent-soft)}
+  a:hover{border-bottom-color:var(--accent)}
+  em{font-style:italic}
+  strong{font-weight:650}
+  .callout{
+    margin:28px 0; padding:18px 22px; background:#fff;
+    border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:2px;
+  }
+  .callout-label{
+    display:block; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:6px; font-weight:650;
+  }
+  .callout p{margin:0; font-size:18px; color:var(--ink)}
+  table{border-collapse:collapse; width:100%; margin:26px 0; font-size:16.5px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+  th,td{text-align:left; vertical-align:top; padding:11px 14px; border-bottom:1px solid var(--rule)}
+  th{color:var(--muted); font-weight:600; font-size:13px; letter-spacing:.02em;
+    text-transform:uppercase; border-bottom:1.5px solid var(--rule)}
+  hr{border:0; border-top:1px solid var(--rule); margin:44px 0}
+  footer{padding:8px 0 60px; font-size:14px; color:var(--faint); letter-spacing:.01em}
+  footer a{color:var(--muted); text-decoration:none; border:0}
+  footer a:hover{color:var(--accent)}
+  .footer-links{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  @media (max-width:560px){
+    body{font-size:18px} h1{font-size:31px} .standfirst{font-size:19px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="site">
+    <div class="masthead">
+      <a href="index.html">Signal / Noise</a>
+      <span class="right">
+        <a href="https://www.linkedin.com/in/carlosarivero/">LinkedIn</a>
+        <a href="https://github.com/HerdingAI">GitHub</a>
+      </span>
+    </div>
+    <div class="breadcrumb"><a href="index.html">Signal / Noise</a> · <a href="thoughts.html">Thoughts</a></div>
+  </header>
+
+  <article>
+    <div class="kicker">Essay · AI product in regulated financial services</div>
+    <h1>What regulators actually read in your model documentation</h1>
+    <p class="standfirst">Most model documentation is written for auditors who will never read it. The parts that get read — and the parts that get you in trouble — are predictable.</p>
+    <div class="metarow">
+      <span><b>Theme</b> &nbsp;data governance · documentation</span>
+      <span><b>For</b> &nbsp;PMs whose models face examiners</span>
+    </div>
+
+    <p>The average model documentation package in financial services is a monument to defensive writing. Two hundred pages, produced under deadline, assembled from a template nobody loves, and destined to be read by almost no one. Teams treat it as a compliance tax — a thing you generate to survive an exam — and so they optimize for volume and completeness rather than for the reader. This is exactly backwards, because there <em>is</em> a reader, the reader is predictable, and the reader is not impressed by weight.</p>
+
+    <p>A reviewer — an examiner, an internal validator, a second-line risk partner — is not trying to read your document end to end. They are trying to answer a short list of questions, and almost all of those questions turn out to be one question wearing different clothes: <em>can we trust how this team governs its data?</em> The model math is rarely where they linger. They navigate straight to the sections that reveal whether you know where your data came from, whether you were allowed to use it, and whether you can account for what it did to a specific person. Everything else is scenery. If you know which sections those are, you can write the ten pages that matter well and let the other hundred and ninety be boilerplate. If you don't, you'll pour effort into the scenery and leave the load-bearing pages thin — which is precisely the profile that turns a routine review into a finding.</p>
+
+    <h2>What they navigate to first</h2>
+
+    <p><strong>Purpose and use — and the gap between them.</strong> The first thing a good reviewer checks is whether the model is being used for what it was built and approved to do. Model built to triage low-risk cases, now quietly making high-risk decisions? That's not a modeling defect; it's a use-versus-purpose mismatch, and it's the single most common way a technically fine model becomes a problem. State the intended use with painful specificity, and state the limits of that use just as plainly. Vagueness here reads as a team that doesn't know where its own model is deployed.</p>
+
+    <p><strong>Where the data came from — and whether you can prove it.</strong> This is the section that gets read closely and the section teams write worst. Data governance is not a chapter you append; it's the spine the whole document hangs on. A reviewer wants to trace a feature backwards from the model to its origin system and see, at each hop, who owned it, what transformed it, and what it actually means in that source. Gaps in that chain — a feature whose origin nobody can name, a transformation no one wrote down — are what they circle first. The teams that clear review fast are the ones who can answer "where did this field come from" without convening a meeting.</p>
+
+    <p><strong>Whether you were allowed to use it.</strong> Provenance answers where the data is from; permissible use answers whether you had the right to use it this way. Consent scope, contractual limits on purchased data, retention windows, minimization, access controls on who could touch it — this is the heart of data governance, and it's where a technically excellent model quietly becomes a liability. A feature can be predictive, available, and off-limits all at once. Documentation that describes what the data does but not whether you were entitled to use it has skipped the question the reviewer came to ask.</p>
+
+    <div class="callout">
+      <span class="callout-label">The move</span>
+      <p>Before it ships, ask: could a competent stranger trace every input back to a source, confirm we were allowed to use it, and explain a single decision — using only this document? If not, you don't have documentation. You have a paper trail, and a paper trail is what you point to <em>after</em> something has already gone wrong.</p>
+    </div>
+
+    <h2>What quietly gets you in trouble</h2>
+
+    <p><strong>Lineage that doesn't survive a follow-up question.</strong> Reviewers pull one thread and pull hard: where did this feature come from, and were we allowed to use it this way? If the answer requires three people and a week, that's the finding. Fair-lending and consumer-protection risk lives right here — a proxy variable that correlates with a protected class doesn't announce itself in the accuracy metric, it hides in the lineage. Governance that only exists as a diagram, never reconciled against what the pipeline actually does, is worse than none, because it documents a control you don't have.</p>
+
+    <p><strong>Third-party data opacity.</strong> Buying the data doesn't outsource the responsibility for governing it. "It's the vendor's proprietary dataset" is not an answer a reviewer accepts; it's a gap they document. You still need to know what's in it, how it was collected, whether its permissible-use terms cover your use, and what happens to a customer when it's wrong. If you can't answer those about data you licensed, you own the hole as surely as if you'd built it.</p>
+
+    <p><strong>Explainability that can't produce a reason for a single decision.</strong> In many uses — anything touching credit, and increasingly anything touching insurance under the <a href="https://content.naic.org/article/naic-members-approve-model-bulletin-use-ai-insurers">NAIC's 2023 model bulletin on insurers' use of AI</a> — the binding question is not "is the model accurate overall" but "why did it produce <em>this</em> outcome for <em>this</em> person." Under ECOA and Regulation B, an adverse decision needs specific, accurate reasons. Aggregate performance charts don't answer that. If your documentation can describe the model's behavior in general but not account for an individual output, you've documented the wrong thing.</p>
+
+    <table>
+      <thead><tr><th>Teams over-invest in</th><th>Reviewers actually weigh</th></tr></thead>
+      <tbody>
+        <tr><td>Page count and formatting polish</td><td>Whether use matches intended purpose</td></tr>
+        <tr><td>Headline accuracy metrics</td><td>Whether the data was permissible to use</td></tr>
+        <tr><td>Model math in exhaustive detail</td><td>Lineage that survives a follow-up question</td></tr>
+        <tr><td>Sign-off signatures</td><td>A defensible reason for any single decision</td></tr>
+      </tbody>
+    </table>
+
+    <p>The reframe worth keeping: model documentation is not an archive, it's an argument — the argument that a competent, skeptical outsider should trust how you govern the data behind this model. Written that way, it gets shorter, it gets read, and it stops being the thing that surprises you in an exam. Written as a compliance tax, it grows without bound and defends nothing, because the reader you were actually writing for was never real.</p>
+
+    <hr>
+    <p style="font-size:16px;color:var(--muted)">If you take one thing: the model math isn't what gets read. Where the data came from, whether you could use it, and what it did to one person — that's the document.</p>
+  </article>
+
+  <footer>
+    <div class="footer-links">
+      <a href="thoughts.html">← All thoughts</a>
+      <a href="https://www.linkedin.com/in/carlosarivero/">Disagree? LinkedIn →</a>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

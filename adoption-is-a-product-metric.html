@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="If the producers don't use it, the model doesn't exist. Why adoption belongs on the dashboard next to precision and recall, and how to design for it from day one.">
+<title>Adoption is a product metric, not a change-management afterthought — Signal / Noise</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5b5b57; --faint:#8a8a84;
+    --bg:#fbfbf8; --rule:#e4e3dc; --accent:#2b4a6f; --accent-soft:#eef1f5;
+    --maxw:680px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:19px; line-height:1.62; letter-spacing:.002em;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+  .nav-sans,.masthead,.meta,.callout-label,.tag,footer,.kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  header.site{padding:34px 0 0}
+  .masthead{
+    display:flex; justify-content:space-between; align-items:baseline; gap:16px;
+    font-size:14px; letter-spacing:.02em;
+  }
+  .masthead a{color:var(--ink); text-decoration:none; font-weight:600}
+  .masthead .right a{color:var(--muted); font-weight:500; margin-left:16px}
+  .masthead a:hover{color:var(--accent)}
+  .breadcrumb{
+    margin-top:26px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-size:13.5px; color:var(--faint); letter-spacing:.01em;
+  }
+  .breadcrumb a{color:var(--muted); text-decoration:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  article{padding:8px 0 40px}
+  .kicker{
+    margin:40px 0 14px; font-size:12.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--faint);
+  }
+  h1{
+    font-size:38px; line-height:1.12; letter-spacing:-.01em;
+    margin:0 0 14px; font-weight:600;
+  }
+  .standfirst{font-size:21px; line-height:1.5; color:var(--muted); margin:0 0 26px}
+  .metarow{
+    display:flex; flex-wrap:wrap; gap:8px 18px; padding:14px 0 0; margin-bottom:6px;
+    border-top:1px solid var(--rule);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-size:12.5px; color:var(--faint); letter-spacing:.02em;
+  }
+  .metarow b{color:var(--muted); font-weight:600}
+  h2{font-size:24px; line-height:1.22; margin:42px 0 12px; font-weight:600; letter-spacing:-.005em}
+  p{margin:0 0 20px}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent-soft)}
+  a:hover{border-bottom-color:var(--accent)}
+  em{font-style:italic}
+  strong{font-weight:650}
+  .callout{
+    margin:28px 0; padding:18px 22px; background:#fff;
+    border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:2px;
+  }
+  .callout-label{
+    display:block; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:6px; font-weight:650;
+  }
+  .callout p{margin:0; font-size:18px; color:var(--ink)}
+  table{border-collapse:collapse; width:100%; margin:26px 0; font-size:16.5px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+  th,td{text-align:left; vertical-align:top; padding:11px 14px; border-bottom:1px solid var(--rule)}
+  th{color:var(--muted); font-weight:600; font-size:13px; letter-spacing:.02em;
+    text-transform:uppercase; border-bottom:1.5px solid var(--rule)}
+  hr{border:0; border-top:1px solid var(--rule); margin:44px 0}
+  footer{padding:8px 0 60px; font-size:14px; color:var(--faint); letter-spacing:.01em}
+  footer a{color:var(--muted); text-decoration:none; border:0}
+  footer a:hover{color:var(--accent)}
+  .footer-links{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  @media (max-width:560px){
+    body{font-size:18px} h1{font-size:31px} .standfirst{font-size:19px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="site">
+    <div class="masthead">
+      <a href="index.html">Signal / Noise</a>
+      <span class="right">
+        <a href="https://www.linkedin.com/in/carlosarivero/">LinkedIn</a>
+        <a href="https://github.com/HerdingAI">GitHub</a>
+      </span>
+    </div>
+    <div class="breadcrumb"><a href="index.html">Signal / Noise</a> · <a href="thoughts.html">Thoughts</a></div>
+  </header>
+
+  <article>
+    <div class="kicker">Essay · AI product in regulated financial services</div>
+    <h1>Adoption is a product metric, not a change-management afterthought</h1>
+    <p class="standfirst">If the producers don't use it, the model doesn't exist. Why adoption belongs on the dashboard next to precision and recall, and how to design for it from day one.</p>
+    <div class="metarow">
+      <span><b>Theme</b> &nbsp;adoption · metrics · design</span>
+      <span><b>For</b> &nbsp;PMs shipping AI into expert workflows</span>
+    </div>
+
+    <p>Here is a model with a precision of 0.91 and a recall of 0.88, validated, documented, and deployed. And here is the underwriter it was built for, who glances at its recommendation, ignores it, and prices the risk the way she always has. What is that model's real precision? It's undefined — because a recommendation nobody acts on has no outcomes to be right or wrong about. The dashboard says 0.91. Reality says zero. The gap between those two numbers is adoption, and most teams treat it as somebody else's problem, to be handled after launch by a "change management" workstream with no seat at the design table.</p>
+
+    <p>That's the error. Adoption isn't the thing that happens to a finished product. It's a property of the product, as measurable and as designable as precision, and it should sit on the same dashboard. Precision and recall tell you whether the model is right. Adoption tells you whether being right matters. You need both numbers, and only one of them is on most teams' walls.</p>
+
+    <h2>Why offline metrics quietly lie to you</h2>
+
+    <p>Offline metrics answer a question posed in a vacuum: given this input, is the output correct? Adoption answers the question that actually pays the bills: given this output, in this workflow, under this person's incentives and time pressure and professional pride, does the decision change? A model can win the first question and lose the second decisively, and nothing in your validation suite will warn you, because your validation suite never met the user.</p>
+
+    <p>The reasons a good model goes unused are specific and, crucially, mostly designable:</p>
+
+    <table>
+      <thead><tr><th>Why they don't use it</th><th>What it's really about</th></tr></thead>
+      <tbody>
+        <tr><td>"I don't know why it said that."</td><td>No reason attached to the output. Experts don't act on assertions they can't interrogate.</td></tr>
+        <tr><td>"It's not how I work."</td><td>The tool sits beside the workflow instead of inside it — another tab, another login, another step.</td></tr>
+        <tr><td>"It was wrong once."</td><td>A single salient miss with no graceful failure mode resets trust to zero.</td></tr>
+        <tr><td>"If it's wrong, it's on me."</td><td>The person carries the accountability but the tool took the judgment. Nobody trades authority for exposure.</td></tr>
+      </tbody>
+    </table>
+
+    <p>Notice what's <em>not</em> on that list: "the model wasn't accurate enough." Accuracy is table stakes and rarely the binding constraint. The binding constraints are legibility, fit, failure behavior, and the alignment of authority with accountability — and every one of them is a design decision you make early or forfeit.</p>
+
+    <div class="callout">
+      <span class="callout-label">The reframe</span>
+      <p>Stop asking "is the model good enough to ship?" and start asking "what would make a busy expert change a decision they're personally accountable for?" The second question designs a product. The first one only validates a model.</p>
+    </div>
+
+    <h2>Designing for adoption from day one</h2>
+
+    <p><strong>Instrument it like any other metric.</strong> Pick an adoption measure before you build, not after you launch. Not logins — <em>decision influence</em>: how often does the output actually change what the human does? Override rate is the most honest number in the building. A high override rate isn't a user-training problem; it's the product telling you the truth. Put it on the dashboard next to precision and watch how differently the team behaves when both are visible.</p>
+
+    <p><strong>Attach a reason to every output.</strong> In regulated financial services you likely need this for the examiner anyway — but the same explanation that satisfies governance is what earns the expert's trust. An output an underwriter can interrogate is one she can decide to trust or overrule on the merits. An unexplained score is one she can only ignore. Explainability isn't only a compliance surface; it's your primary adoption surface, and it's cheaper to build once for both.</p>
+
+    <p><strong>Get inside the workflow, not beside it.</strong> The single largest adoption tax is asking someone to leave the system they already live in. A suggestion that appears where the decision is already made — in the underwriting screen, in the claims queue — starts from trust. A suggestion behind a separate login starts from friction and rarely recovers.</p>
+
+    <p><strong>Design the failure, not just the success.</strong> Experts don't abandon tools for being imperfect; they abandon them for being confidently, opaquely wrong with no recourse. Show uncertainty honestly. Make the low-confidence case look different from the high-confidence one. A model that says "I'm not sure here, take a look" survives its mistakes. A model that is equally certain when it's wrong as when it's right gets switched off the first time it's caught.</p>
+
+    <p><strong>Keep authority with the accountable human.</strong> Position the model as an input to a decision the expert still owns, not a verdict they must overturn. People adopt tools that make them faster and better at a job that remains theirs. They quietly sabotage tools that seem to be auditioning for their judgment while leaving them holding the risk.</p>
+
+    <p>Do this and the payoff compounds in a way the offline metrics can't show you: an adopted model generates real outcomes, real outcomes generate the feedback that improves the next version, and the improvement earns more adoption. A model nobody uses gets none of that. It just decays quietly at 0.91, a correct answer to a question no one asked it, on a dashboard that was measuring the wrong thing all along.</p>
+
+    <hr>
+    <p style="font-size:16px;color:var(--muted)">If you take one thing: put override rate on the dashboard next to precision. The model's real accuracy is whatever survives contact with a user who didn't have to listen.</p>
+  </article>
+
+  <footer>
+    <div class="footer-links">
+      <a href="thoughts.html">← All thoughts</a>
+      <a href="https://www.linkedin.com/in/carlosarivero/">Disagree? LinkedIn →</a>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Every AI initiative I've seen fail in financial services failed on trust, data, or adoption — never on model quality. What that means for how you sequence the work.">
+<title>The model is the easy part — Signal / Noise</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5b5b57; --faint:#8a8a84;
+    --bg:#fbfbf8; --rule:#e4e3dc; --accent:#2b4a6f; --accent-soft:#eef1f5;
+    --maxw:680px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:19px; line-height:1.62; letter-spacing:.002em;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+  .nav-sans,.masthead,.meta,.callout-label,.tag,footer,.kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  header.site{padding:34px 0 0}
+  .masthead{
+    display:flex; justify-content:space-between; align-items:baseline; gap:16px;
+    font-size:14px; letter-spacing:.02em;
+  }
+  .masthead a{color:var(--ink); text-decoration:none; font-weight:600}
+  .masthead .right a{color:var(--muted); font-weight:500; margin-left:16px}
+  .masthead a:hover{color:var(--accent)}
+  .breadcrumb{
+    margin-top:26px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-size:13.5px; color:var(--faint); letter-spacing:.01em;
+  }
+  .breadcrumb a{color:var(--muted); text-decoration:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  article{padding:8px 0 40px}
+  .kicker{
+    margin:40px 0 14px; font-size:12.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--faint);
+  }
+  h1{
+    font-size:38px; line-height:1.12; letter-spacing:-.01em;
+    margin:0 0 14px; font-weight:600;
+  }
+  .standfirst{font-size:21px; line-height:1.5; color:var(--muted); margin:0 0 26px}
+  .metarow{
+    display:flex; flex-wrap:wrap; gap:8px 18px; padding:14px 0 0; margin-bottom:6px;
+    border-top:1px solid var(--rule);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-size:12.5px; color:var(--faint); letter-spacing:.02em;
+  }
+  .metarow b{color:var(--muted); font-weight:600}
+  h2{font-size:24px; line-height:1.22; margin:42px 0 12px; font-weight:600; letter-spacing:-.005em}
+  p{margin:0 0 20px}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent-soft)}
+  a:hover{border-bottom-color:var(--accent)}
+  em{font-style:italic}
+  strong{font-weight:650}
+  .callout{
+    margin:28px 0; padding:18px 22px; background:#fff;
+    border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:2px;
+  }
+  .callout-label{
+    display:block; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:6px; font-weight:650;
+  }
+  .callout p{margin:0; font-size:18px; color:var(--ink)}
+  table{border-collapse:collapse; width:100%; margin:26px 0; font-size:16.5px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+  th,td{text-align:left; vertical-align:top; padding:11px 14px; border-bottom:1px solid var(--rule)}
+  th{color:var(--muted); font-weight:600; font-size:13px; letter-spacing:.02em;
+    text-transform:uppercase; border-bottom:1.5px solid var(--rule)}
+  hr{border:0; border-top:1px solid var(--rule); margin:44px 0}
+  footer{padding:8px 0 60px; font-size:14px; color:var(--faint); letter-spacing:.01em}
+  footer a{color:var(--muted); text-decoration:none; border:0}
+  footer a:hover{color:var(--accent)}
+  .footer-links{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  @media (max-width:560px){
+    body{font-size:18px} h1{font-size:31px} .standfirst{font-size:19px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="site">
+    <div class="masthead">
+      <a href="index.html">Signal / Noise</a>
+      <span class="right">
+        <a href="https://www.linkedin.com/in/carlosarivero/">LinkedIn</a>
+        <a href="https://github.com/HerdingAI">GitHub</a>
+      </span>
+    </div>
+    <div class="breadcrumb"><a href="index.html">Signal / Noise</a> · <a href="thoughts.html">Thoughts</a></div>
+  </header>
+
+  <article>
+    <div class="kicker">Essay · AI product in regulated financial services</div>
+    <h1>The model is the easy part</h1>
+    <p class="standfirst">Every AI initiative I've seen fail in financial services failed on trust, data, or adoption — never on model quality. What that means for how you sequence the work.</p>
+    <div class="metarow">
+      <span><b>Theme</b> &nbsp;strategy · sequencing</span>
+      <span><b>For</b> &nbsp;PMs shipping AI in regulated FS</span>
+    </div>
+
+    <p>Do the autopsy on enough dead AI projects and you stop finding a body at the scene you expected. The pitch decks always blamed the model — not accurate enough, hallucinated, "the vendor oversold it." But when you actually trace the collapse back to its first load-bearing crack, the model is almost never where it started. The model was fine. It was the three things around the model that were never resourced like they mattered: trust, data, and adoption.</p>
+
+    <p>This isn't a claim that models don't matter. It's a claim about <em>marginal effort</em>. The center of gravity in this field has moved. Ten years ago, getting a model that worked at all was the hard, uncertain, differentiating part of the job, and everything else was plumbing. Foundation models and cheap adaptation flipped that. Today you can stand up something that classifies, drafts, or scores at a usable bar in an afternoon. What you cannot stand up in an afternoon is a data pipeline your risk function will sign off on, a documentation trail an examiner will accept, or a room full of underwriters who will actually change how they work because of your tool.</p>
+
+    <p>So the model is the easy part now — not because modeling is trivial, but because the difficulty has drained out of it and pooled everywhere else.</p>
+
+    <h2>The three places difficulty pooled</h2>
+
+    <p><strong>Trust.</strong> In a regulated environment, "the model is 94% accurate" is the beginning of a conversation, not the end of one. Someone will ask: accurate on which population? Wrong in which direction? What happens to a customer when it's wrong, and can we explain that decision after the fact? A model that is slightly less accurate but produces a defensible reason for every output will clear governance while a better black box sits in a committee queue for two quarters. Trust is not a communications problem you solve at launch. It's an architectural property you either build in or spend the rest of the project pretending you have.</p>
+
+    <p><strong>Data.</strong> The demo runs on a clean extract someone pulled by hand. Production runs on the actual warehouse — where the field means three different things depending on which system wrote it, the historical labels encode a decision process you're no longer allowed to use, and the record you most need is the one behind an access boundary you can't cross without a data-sharing agreement and ninety days. Nearly every "the model degraded in production" story is a data-lineage story wearing a model's clothes.</p>
+
+    <p><strong>Adoption.</strong> If the producers don't use it, the model doesn't exist. Not "underperforms" — <em>doesn't exist</em>, as far as any P&amp;L is concerned. An underwriter who quietly keeps doing it the old way, an adjuster who overrides every suggestion, a relationship manager who never opens the tab: each is a complete failure wearing the costume of a successful deployment. Adoption is where the most confident projects go to die, because it's the one constraint you can't engineer around from your desk.</p>
+
+    <div class="callout">
+      <span class="callout-label">The tell</span>
+      <p>If your project plan front-loads model selection and back-loads "change management" and "data readiness" as workstreams that start in month three, you have inverted the actual risk. You are spending your best, earliest, most-attention-rich weeks on the part most likely to already be fine.</p>
+    </div>
+
+    <h2>What this does to sequencing</h2>
+
+    <p>The practical consequence is that you should sequence the work against the risk, not against the org chart. The instinct — model first, because it feels like the real work and it's the part your engineers are excited about — puts your scarcest resource, early attention, on the lowest-variance problem. Invert it.</p>
+
+    <table>
+      <thead><tr><th>Instinctive order</th><th>Risk-first order</th></tr></thead>
+      <tbody>
+        <tr><td>Pick and tune the model.</td><td>Prove one real user will change one real decision because of the output.</td></tr>
+        <tr><td>Wire up production data.</td><td>Trace the exact data lineage and access reality for that decision — before modeling.</td></tr>
+        <tr><td>Build the governance/explainability story.</td><td>Fix the explainability and control surface as a design constraint, not a deliverable.</td></tr>
+        <tr><td>"Roll out" and manage change.</td><td>Ship the model into the workflow you already validated a human wants.</td></tr>
+      </tbody>
+    </table>
+
+    <p>Concretely: before anyone benchmarks a model, get one producer to commit that a specific output would change a specific decision they make — and watch them use a paper prototype of it. If they wouldn't act on a perfect answer, a real one won't save you, and you've learned it in week one instead of after a nine-month build. Then, before modeling, walk the data backwards from that decision to its source systems and find out who owns each hop and what it will actually take to use it. The model comes last not because it's least important, but because it's the step with the least uncertainty left in it once the other three are honest.</p>
+
+    <p>None of this is a counsel of despair about models. It's the opposite. The model being the easy part is <em>good news</em>: it means the hard, differentiated, defensible work of building AI in financial services is exactly the work a good product organization is built to do — understanding a user well enough to change their behavior, and understanding a system well enough to trust its outputs. That work was always going to decide whether you shipped. The model just stopped being the thing that hid it from you.</p>
+
+    <hr>
+    <p style="font-size:16px;color:var(--muted)">If you take one thing: the model is the part of an AI project with the least uncertainty left in it. Spend your first weeks where the variance actually is.</p>
+  </article>
+
+  <footer>
+    <div class="footer-links">
+      <a href="thoughts.html">← All thoughts</a>
+      <a href="https://www.linkedin.com/in/carlosarivero/">Disagree? LinkedIn →</a>
+    </div>
+  </footer>
+</div>
+</body>
+</html>
