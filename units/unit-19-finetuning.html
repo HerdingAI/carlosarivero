@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="The finetuning landscape at a conceptual level — enough to interrogate a proposal's data requirements and maintenance burden, and make the finetune / don't-finetune call as a business decision.">
+<title>Unit 19 — Finetuning: What It Actually Involves</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --arch:#5c7a99; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.depth{background:var(--depth); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* three choices */
+  .three{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin:24px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .three .c{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 15px; border-top-width:4px; border-top-color:var(--arch)}
+  .three .c h4{margin:0 0 5px; font-size:1rem}
+  .three .c p{margin:0; font-size:13px; color:#555}
+  @media (max-width:600px){.three{grid-template-columns:1fr}}
+
+  /* two paths */
+  .paths{display:flex; gap:14px; margin:22px 0; flex-wrap:wrap; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .paths .p{flex:1; min-width:250px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:15px 17px}
+  .paths .prog{border-left:4px solid #5c8a5c} .paths .dist{border-left:4px solid #c99a3b}
+  .paths .p h4{margin:0 0 8px; font-size:1.04rem}
+  .paths .prog h4{color:#2f6f4f} .paths .dist h4{color:#8a6a1f}
+  .paths .p ol{margin:0; padding-left:18px} .paths .p li{margin:5px 0; font-size:13.5px; color:#555}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Depth Layer &nbsp;·&nbsp; Architecture Thread</p>
+  <h1><span class="num">Unit 19</span> — Finetuning: What It Actually Involves</h1>
+  <p class="lead">The finetuning landscape at a conceptual level — enough to interrogate a proposal's data requirements and maintenance burden, and make the finetune / don't-finetune call as a business decision.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">architecture</span><span class="pill">data-cost</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill depth">DEPTH — when someone seriously proposes finetuning</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Make the finetune / don't-finetune call a business decision — informed but not implemented by you.</div></div>
+    <div class="row"><div class="lbl">Depends on</div><div class="val">Unit 05 (the four-way decision; "RAG for facts, finetuning for form"). Pull in when finetuning is seriously proposed.</div></div>
+  </div>
+
+  <h2>Why this is a decision unit, not a how-to</h2>
+  <p>Unit 05 gave you the reflex to reach for prompting and RAG before finetuning, and Unit 11 covered the data it demands. This unit is for the moment a team seriously proposes changing the model's weights anyway. You won't run the training. Your job is to interrogate the proposal — <em>what data, how much, who maintains it</em> — and make the call as a business decision. The good news: deciding <em>whether</em> to finetune is the hard part; the mechanics are comparatively straightforward.</p>
+
+  <h2>1. What finetuning actually is</h2>
+  <p>Finetuning is <span class="keyterm">transfer learning</span>: take a base model that has <em>some</em> of what you need and refine it for your task. It works because the model already learned a huge amount during pre-training, so finetuning transfers that knowledge — the way knowing piano speeds up learning another instrument.</p>
+  <div class="callout">
+    <span class="h">Two ideas that reframe the whole thing</span>
+    <strong>Sample efficiency:</strong> training a legal-QA model from scratch might need millions of examples; finetuning a good base model might need a few hundred. <strong>Unlocking, not teaching:</strong> the most useful lens is that finetuning often just <em>surfaces capabilities the model already has</em> but that are hard to reach through prompting alone. If the base model genuinely can't do the task at all, finetuning is a much steeper climb than if it can <em>almost</em> do it.
+  </div>
+  <p>Any training after pre-training counts as finetuning, so it takes several forms. The ones an application team uses:</p>
+  <table class="tbl">
+    <tr><td>Supervised finetuning</td><td>Train on labeled <code>(instruction, response)</code> pairs so the model learns to produce the outputs you want. The workhorse.</td></tr>
+    <tr><td>Preference finetuning</td><td>Train on comparisons <code>(instruction, better response, worse response)</code> to align outputs with human preference.</td></tr>
+    <tr><td>Continued pre-training</td><td>Self-supervised finetuning on cheap, unlabeled domain text (raw legal docs, a big Vietnamese corpus) <em>before</em> the expensive labeled step — a cost-saving warm-up.</td></tr>
+  </table>
+
+  <h2>2. The three choices to actually run it</h2>
+  <p>Once the decision is made, execution comes down to picking three things:</p>
+  <div class="three">
+    <div class="c"><h4>Base model</h4><p>Same selection criteria as Unit 07 (size, license, benchmarks). Start with the strongest you can afford to prove feasibility, then work down.</p></div>
+    <div class="c"><h4>Method</h4><p>Lightweight adapters (e.g. LoRA/PEFT) vs. full finetuning — a data-and-serving trade (below).</p></div>
+    <div class="c"><h4>Framework</h4><p>A finetuning API (upload data, get a model) vs. a self-run framework — a control-vs-convenience trade (below).</p></div>
+  </div>
+
+  <h3>Method: lightweight adapters vs. full finetuning</h3>
+  <p>You don't need the math, just the trade. <strong>Adapter methods</strong> (LoRA and other PEFT techniques) train a small add-on rather than the whole model: cheaper, work with small datasets (a few hundred examples), run on modest hardware, and — importantly — let you serve <em>many</em> finetuned variants on one shared base model. <strong>Full finetuning</strong> updates everything: best ceiling on performance, but wants thousands+ of examples and means serving a separate full model each time.</p>
+  <table class="tbl">
+    <tr><th></th><th>Adapter (LoRA / PEFT)</th><th>Full finetuning</th></tr>
+    <tr><td>Data needed</td><td>Small — hundreds can work</td><td>Large — thousands and up</td></tr>
+    <tr><td>Performance</td><td>Good, usually below full</td><td>Highest ceiling</td></tr>
+    <tr><td>Serving</td><td>Many variants on one base model</td><td>A full model per variant</td></tr>
+    <tr><td>When</td><td>Start here; small data</td><td>Later, with lots of data</td></tr>
+  </table>
+  <p>Practical rule: start with an adapter method, move to full finetuning later if needed. With only a few hundred examples, full finetuning often <em>won't even beat</em> LoRA.</p>
+
+  <h3>Framework: API vs. run-it-yourself</h3>
+  <table class="tbl">
+    <tr><td>Finetuning API</td><td>Upload data, pick a base model, get a finetuned model back. Quick and easy — but limited to supported base models and the knobs the API exposes.</td></tr>
+    <tr><td>Self-run framework</td><td>More flexibility and control (adapter or full), but you provision the compute — a mid-tier GPU suffices for adapters; full finetuning at scale needs distributed training.</td></tr>
+  </table>
+
+  <h2>3. Two development paths worth recognizing</h2>
+  <p>When engineers describe <em>how</em> they'll approach it, it usually maps to one of these:</p>
+  <div class="paths">
+    <div class="p prog">
+      <h4>Progression path</h4>
+      <ol>
+        <li>Test the <em>code</em> on the cheapest, fastest model.</li>
+        <li>Test the <em>data</em> on a mid model (loss should drop with more data).</li>
+        <li>Push performance with the best model.</li>
+        <li>Run all models to map the price/performance frontier and pick.</li>
+      </ol>
+    </div>
+    <div class="p dist">
+      <h4>Distillation path</h4>
+      <ol>
+        <li>Finetune the strongest model you can afford on a <em>small</em> dataset.</li>
+        <li>Use it to generate more training data.</li>
+        <li>Train a cheaper model on that generated data.</li>
+      </ol>
+    </div>
+  </div>
+  <p>Recognizing which path a proposal is on tells you what it's optimizing for — the progression path for finding the best cost/quality model, the distillation path for getting a small, cheap production model out of a strong one.</p>
+
+  <h2>4. What to interrogate in a finetuning proposal</h2>
+  <p>This is the unit's real job. When finetuning is on the table, these are the questions that turn it from an engineering enthusiasm into a business decision:</p>
+  <div class="callout">
+    <span class="h">The proposal interrogation</span>
+    <strong>Data:</strong> Do we have the <code>(instruction, response)</code> pairs, at the quality and volume this method needs — or are we about to fund a big annotation project (Unit 11)? <strong>Base capability:</strong> can the model <em>almost</em> do this already (a good finetune) or not at all (a long shot)? <strong>Alternatives exhausted:</strong> did systematic prompting and RAG genuinely fail first (Unit 05)? <strong>Maintenance:</strong> who owns retraining and monitoring as base models improve — because a better base model can outrun our finetuned one, stranding the investment? <strong>Serving:</strong> one model or many variants (which points at adapter vs. full)?
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Explain finetuning as transfer learning that's sample-efficient and mostly <em>unlocks</em> existing capability — not teaching from scratch.</li>
+      <li>Distinguish supervised, preference, and continued-pre-training finetuning at a conceptual level.</li>
+      <li>Reason about the adapter-vs-full trade (data, performance, serving) and API-vs-framework trade (control vs. convenience) without running either.</li>
+      <li>Recognize the progression and distillation development paths.</li>
+      <li>Interrogate a finetuning proposal on data, base capability, alternatives, maintenance, and serving — and make it a business call.</li>
+    </ul>
+  </div>
+  <p>Deliberately out of scope here: the memory/quantization and PEFT internals — those are the engineers' implementation depth, not yours. That closes the architecture thread. The remaining DEPTH units cover data (20), monitoring (21), and safety (22).</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 19 of 24 · Depth layer · Tags: <em>architecture · data-cost</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong><a href="unit-20-synthetic-data-and-distillation.html" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid rgba(180,85,45,.35)">Unit 20 — Synthetic Data &amp; Distillation</a></strong></div>
+  </div>
+
+</div>
+</body>
+</html>

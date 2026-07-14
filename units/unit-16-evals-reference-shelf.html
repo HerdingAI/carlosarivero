@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="The FAQ distilled from teaching hundreds of engineers and PMs — plus the sharp idea that product design and evaluability are the same problem. A lookup, not a linear read.">
+<title>Unit 16 — Evals Reference Shelf</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --eval:#6b4d8a; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.depth{background:var(--depth); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  /* FAQ cards */
+  .faq{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin:14px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; border-left:4px solid var(--eval)}
+  .faq .q{font-weight:700; font-size:1.04rem; margin:0 0 8px; color:var(--ink)}
+  .faq .q .tldr{display:inline-block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+    border-radius:5px; padding:2px 8px; margin-left:8px; vertical-align:middle}
+  .faq .tldr.no{background:#f7ecec; color:#a23b3b} .faq .tldr.yes{background:#eef3ef; color:#2f6f4f}
+  .faq .tldr.it{background:#faf2e8; color:#8a6a1f}
+  .faq .a{font-size:14.5px; color:#555; margin:0}
+  .faq .a + .a{margin-top:8px}
+
+  .tbl{width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:10px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:22%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* smell before/after */
+  .smell{display:flex; gap:14px; margin:22px 0; flex-wrap:wrap; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .smell .c{flex:1; min-width:240px; border-radius:12px; padding:15px 17px}
+  .smell .bad{background:#f7ecec; border:1px solid #e3c4c4}
+  .smell .good{background:#eef3ef; border:1px solid #cfe3d6}
+  .smell .c h4{margin:0 0 6px; font-size:1rem}
+  .smell .bad h4{color:#a23b3b} .smell .good h4{color:#2f6f4f}
+  .smell .c p{margin:0; font-size:13.5px; color:#555}
+
+  .verify{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin:20px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .verify h4{margin:0 0 8px; font-size:1.02rem; color:var(--accent)}
+  .verify ol{margin:0; padding-left:20px}
+  .verify li{margin:6px 0; font-size:14.5px; color:#444}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Depth Layer &nbsp;·&nbsp; Eval Thread 5/5</p>
+  <h1><span class="num">Unit 16</span> — Evals Reference Shelf</h1>
+  <p class="lead">The FAQ distilled from teaching hundreds of engineers and PMs — plus the sharp idea that product design and evaluability are the same problem. A lookup, not a linear read.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">evals</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill depth">DEPTH — ongoing reference, not linear reading</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">A place to look up trustworthy answers when a specific eval question arises mid-project.</div></div>
+    <div class="row"><div class="lbl">Depends on</div><div class="val">Unit 06. Closes the eval thread (06 → 07 → 09 → 14 → 15 → 16).</div></div>
+  </div>
+
+  <h2>How to use this unit</h2>
+  <p>The other eval units teach a method start-to-finish. This one is a shelf you return to when a specific question comes up: <em>should I buy an off-the-shelf metric? build a tool? write an eval for this? put a check inline?</em> Skim it now so you know what's here; come back when you need the answer. It closes with the single most useful reframe in the whole thread — that a product being "hard to eval" is usually a product problem, not an eval problem.</p>
+
+  <h2>Metrics &amp; tooling</h2>
+
+  <div class="faq">
+    <p class="q">Should I use ready-to-use / generic metrics? <span class="tldr no">No</span></p>
+    <p class="a">Generic scores — helpfulness, coherence, quality, BERTScore, ROUGE, cosine similarity — measure abstract qualities that may not matter for your task. Good scores don't mean your system works; they mostly create <strong>false confidence</strong>. They won't catch that a real-estate bot suggested an unavailable showing (an assertion catches that) or confused two client personas (a validated judge catches that).</p>
+    <p class="a">The one legitimate use: as <em>exploration signals</em> to surface interesting traces worth reading — never as the measure of quality itself.</p>
+  </div>
+
+  <div class="faq">
+    <p class="q">Should I build my own annotation / trace-viewing tool? <span class="tldr yes">Usually yes</span></p>
+    <p class="a">The highest-leverage investment is a friction-free, domain-specific viewer that puts everything you need to judge a trace on one screen. Off-the-shelf dashboards nudge you toward generic metrics; a custom viewer (buildable in under a day with a notebook or AI coding assistant) keeps the team actually looking at data. Don't buy fancy tools before you've used what you have.</p>
+  </div>
+
+  <h2>When to write an eval — and when not to</h2>
+
+  <div class="faq">
+    <p class="q">Should I practice eval-driven development (write evals before features)? <span class="tldr no">Generally no</span></p>
+    <p class="a">Unlike normal software, LLMs have infinite failure surface — you can't anticipate what breaks. Writing evaluators for <em>imagined</em> failures wastes effort and blocks you. Start with error analysis; write evals for failures you actually <strong>discover</strong>. Narrow exception: a crisp, known constraint like "never mention competitors" can be written up front.</p>
+  </div>
+
+  <div class="faq">
+    <p class="q">Should I build an automated evaluator for every failure I find? <span class="tldr no">No</span></p>
+    <p class="a">First fix obvious gaps (you often just never <em>specified</em> "be concise" or a format). Then apply the <strong>cost hierarchy</strong>: cheap code checks (regex, schema, execution tests) for anything rule-shaped; an LLM judge only for subjective qualities <em>and</em> only for problems you'll iterate on repeatedly — because a judge costs 100+ labeled examples plus ongoing weekly maintenance and cross-team coordination. Always run a cost-benefit check: does this failure justify the investment?</p>
+  </div>
+
+  <div class="faq">
+    <p class="q">How much should I fixate on model selection? <span class="tldr it">Less than you think</span></p>
+    <p class="a">Swapping models is the reflex many teams reach for first. Don't — without evidence. Do error analysis and ask whether the data actually says the <em>model</em> is the problem. Usually the fix is context, prompt, or a bug, not a new model.</p>
+  </div>
+
+  <h2>CI evals vs. production evals</h2>
+  <p>These are complementary systems; the key difference is the <strong>data</strong> they run on.</p>
+  <table class="tbl">
+    <tr><th></th><th>CI / CD</th><th>Production</th></tr>
+    <tr><td>Dataset</td><td>Small, curated (~100+): core features, regression tests for past bugs, known edge cases.</td><td>Sampled live traces — usually <em>no</em> reference answer available.</td></tr>
+    <tr><td>Methods</td><td>Favor <strong>deterministic assertions</strong> (run often, cost matters).</td><td>Lean on reference-free <strong>LLM judges</strong>, run async; track confidence intervals.</td></tr>
+    <tr><td>Trigger</td><td>Every change.</td><td>Continuous sampling; alert if the CI lower-bound crosses threshold.</td></tr>
+  </table>
+  <p>The loop that ties them: when production error analysis reveals a new failure pattern, add representative examples to the CI set so it can't regress.</p>
+
+  <h2>Guardrails vs. evaluators (don't confuse them)</h2>
+  <div class="smell">
+    <div class="c bad">
+      <h4>Guardrails — inline, before the user sees it</h4>
+      <p>Fast, deterministic, explainable (regex, schema, block-lists, light classifiers). Target clear-cut, high-impact failures (PII, injection, malformed JSON). A false positive is a production bug, so keep them conservative. You'd almost never put a slow LLM judge here.</p>
+    </div>
+    <div class="c good">
+      <h4>Evaluators — after the fact, async</h4>
+      <p>Measure nuanced qualities rules can't (factual correctness, completeness). Feed dashboards and regression tests; they don't block the answer. Heavier compute (LLM judge) is fine because they run in the background.</p>
+    </div>
+  </div>
+  <p>An evaluator can double as a guardrail only if it's fast/cheap enough for the request path <em>and</em> the false-positive/false-negative trade favors blocking — high-stakes domains may accept blocking, creative ones may not.</p>
+
+  <h2>The reframe: "it's hard to eval" is a product smell</h2>
+  <p>The most common objection to evals is "our product is hard to evaluate." That's usually a <strong>product problem, not an eval problem</strong>: an output that's hard for <em>you</em> to verify is hard for your <em>users</em> too — in the worst case they must redo the work from scratch to trust it. <em>Designing for verifiability comes before building evals.</em></p>
+
+  <div class="smell">
+    <div class="c bad">
+      <h4>✕ Answer-only</h4>
+      <p>"Net revenue was $4.21M." Nothing to check — the user must redo the analysis to trust it. A 50-page report the doctor must re-read the whole chart to verify.</p>
+    </div>
+    <div class="c good">
+      <h4>✓ Built for verification</h4>
+      <p>Show provenance (which vetted source, who authored it), the assumptions made, intermediate numbers, and a flagged list of what couldn't be verified — each as a scoped unit to accept, edit, or reject.</p>
+    </div>
+  </div>
+
+  <div class="verify">
+    <h4>Four questions to design a product for verification</h4>
+    <ol>
+      <li>What does the user actually need to check?</li>
+      <li>What trusted thing can they compare it against?</li>
+      <li>What signals or heuristics do experts use to verify?</li>
+      <li>What smaller units can they accept, edit, or reject?</li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <span class="h">Why this closes the eval thread</span>
+    Provenance and progressive disclosure make outputs checkable; breaking a workflow into scoped units (is this contradiction real? does this citation support the claim?) makes both <em>users</em> and <em>evals</em> able to grade the work. Evaluability and good product design are the same discipline. Before AI, verification happened incidentally while doing the work; with AI, <strong>verification is the bottleneck</strong> — so design for it on purpose.
+  </div>
+
+  <div class="callout">
+    <span class="h">Going deeper</span>
+    When your organization is building real eval infrastructure, the paid cohort course "AI Evals for Engineers &amp; PMs" is a justified next step — but only once you're past the basics in this thread and actually shipping eval systems.
+  </div>
+
+  <h2>What this shelf gives you</h2>
+  <div class="qbox">
+    <strong>Quick answers you can now cite mid-project:</strong>
+    <ul>
+      <li>Off-the-shelf metrics → no (except as exploration signals). Custom trace viewer → yes.</li>
+      <li>Eval-driven development → generally no; write evals for failures you <em>found</em>, gated by cost-benefit and the assertion-before-judge hierarchy.</li>
+      <li>Model-swapping → not without error-analysis evidence.</li>
+      <li>CI = small curated set + assertions; production = sampled traces + async judges + confidence intervals; feed one into the other.</li>
+      <li>Guardrails (inline, deterministic) ≠ evaluators (async, nuanced).</li>
+      <li>"Hard to eval" → redesign the product for verifiability first (provenance, progressive disclosure, scoped units).</li>
+    </ul>
+  </div>
+  <p>That completes the eval thread. From here the remaining DEPTH units cover architecture internals, data, monitoring, and safety — pulled in whenever a live decision calls for them.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 16 of 24 · Depth layer · Tag: <em>evals</em> · Eval thread 5/5 — complete · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong><a href="unit-17-rag-internals.html" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid rgba(180,85,45,.35)">Unit 17 — RAG Internals: Retrieval Quality</a></strong></div>
+  </div>
+
+</div>
+</body>
+</html>

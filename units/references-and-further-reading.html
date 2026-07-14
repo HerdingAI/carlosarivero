@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Every source behind the 24 units, collected here textbook-style — the three works the series draws on, and a unit-by-unit map to the exact chapters, sections, and pages for anyone who wants to read deeper.">
+<title>References &amp; Further Reading — Applied GenAI Curriculum</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --eval:#6b4d8a; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:800px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35); word-break:break-word}
+  a:hover{border-bottom-color:var(--accent)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  /* primary source cards */
+  .src{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin:14px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; border-left:4px solid var(--accent)}
+  .src .tag{display:inline-block; background:var(--accent); color:#fff; border-radius:6px; padding:2px 9px;
+    font-size:12px; font-weight:700; letter-spacing:.04em; margin-bottom:8px}
+  .src h3{margin:0 0 5px; font-size:1.12rem; font-weight:700; letter-spacing:-.01em; font-family:inherit}
+  .src p{margin:4px 0; font-size:14.5px; color:#555}
+  .src .cite{font-size:13.5px; color:#777}
+
+  /* per-unit map table */
+  .map{width:100%; border-collapse:collapse; margin:16px 0; font-size:14px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .map th,.map td{text-align:left; padding:9px 11px; border-bottom:1px solid var(--line); vertical-align:top}
+  .map th{font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .map td.u{font-weight:700; width:52px; color:var(--accent); white-space:nowrap}
+  .map td.t{width:31%; font-weight:600; color:#333}
+  .map td.s{color:#555; font-size:13.5px}
+  .map tr.depth td.u{color:var(--depth)}
+  .map code{background:var(--code); padding:1px 5px; border-radius:4px; font-size:12px}
+  .grouphdr td{background:#f4f1ea; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    color:#8a6a4a; padding:8px 11px}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15.5px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+
+  /* threads */
+  .threads{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:20px 0}
+  .thread{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:8px 0}
+  .thread b{font-size:14.5px}
+  .thread .seq{font-size:13.5px; color:#666; margin-top:3px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); text-align:center}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .map td.t{width:auto} .map .hide-m{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Series Close</p>
+  <h1>References &amp; Further Reading</h1>
+  <p class="lead">Every source behind the 24 units, collected here textbook-style — the three works the series draws on, and a unit-by-unit map to the exact chapters, sections, and pages for anyone who wants to read deeper.</p>
+
+  <h2>Primary sources</h2>
+
+  <div class="src">
+    <span class="tag">AIE</span>
+    <h3>AI Engineering: Building Applications with Foundation Models</h3>
+    <p>Chip Huyen. O'Reilly Media, 2025. ISBN 978-1-098-16629-8.</p>
+    <p class="cite">The backbone of the series — the source for all CORE units except 04 and 06, and most DEPTH units. Official table of contents (used to verify the page ranges below): <a href="https://github.com/chiphuyen/aie-book/blob/main/ToC.md">github.com/chiphuyen/aie-book</a> · O'Reilly: <a href="https://www.oreilly.com/library/view/ai-engineering/9781098166298/">oreilly.com</a></p>
+  </div>
+
+  <div class="src">
+    <span class="tag">HAMEL</span>
+    <h3>hamel.dev — Hamel Husain's blog</h3>
+    <p>The applied-evaluation spine of the series — the source for the eval thread's practitioner units (06, 14, 15, 16).</p>
+    <p class="cite">Posts cited: <a href="https://hamel.dev/blog/posts/evals/">Your AI Product Needs Evals</a> · <a href="https://hamel.dev/blog/posts/field-guide/">A Field Guide to Rapidly Improving AI Products</a> · <a href="https://hamel.dev/blog/posts/llm-judge/">Creating a LLM-as-a-Judge That Drives Business Results</a> · <a href="https://hamel.dev/blog/posts/evals-faq/">LLM Evals FAQ</a> · <a href="https://hamel.dev/blog/posts/eval-smell/">"It's Hard to Eval" Is a Product Smell</a></p>
+  </div>
+
+  <div class="src">
+    <span class="tag">ANTHROPIC</span>
+    <h3>Anthropic Engineering Blog</h3>
+    <p>The source for the foundational architecture distinction in Unit 04.</p>
+    <p class="cite">Article cited: <a href="https://www.anthropic.com/engineering/building-effective-agents">Building Effective Agents</a> (free, ~25 min)</p>
+  </div>
+
+  <div class="callout">
+    <span class="h">One optional paid resource</span>
+    Referenced in Unit 16 for teams building real eval infrastructure: Husain &amp; Shankar, <em>AI Evals for Engineers &amp; PMs</em> — a cohort course on Maven (<a href="https://maven.com/parlance-labs/evals">maven.com/parlance-labs/evals</a>). Justified only once your organization is past the basics and actually building eval systems.
+  </div>
+
+  <h2>Source map — unit by unit</h2>
+  <p>Citation format for the book: <code>[AIE] Ch.N → "Section" (pp. X–Y)</code>. CORE units are in accent; DEPTH units in brown.</p>
+
+  <table class="map">
+    <tr class="grouphdr"><td colspan="3">CORE — the operating model (Units 01–13)</td></tr>
+    <tr><td class="u">01</td><td class="t">What AI Engineering Is (and Isn't)</td><td class="s">[AIE] Ch.1 → "The Rise of AI Engineering" (pp.&nbsp;2–15) + "The AI Engineering Stack" (pp.&nbsp;35–47)</td></tr>
+    <tr><td class="u">02</td><td class="t">Why the Output Is Never the Same Twice</td><td class="s">[AIE] Ch.2 → "Sampling Fundamentals" + "Sampling Strategies" (pp.&nbsp;88–96) and "The Probabilistic Nature of AI" (pp.&nbsp;105–111)</td></tr>
+    <tr><td class="u">03</td><td class="t">Should This Even Be an AI Feature?</td><td class="s">[AIE] Ch.1 → "Planning AI Applications" (pp.&nbsp;28–35)</td></tr>
+    <tr><td class="u">04</td><td class="t">Workflows vs. Agents</td><td class="s">[Anthropic] "Building Effective Agents"</td></tr>
+    <tr><td class="u">05</td><td class="t">The Four-Way Decision</td><td class="s">[AIE] Ch.6 → "RAG" intro + "RAG Architecture" (pp.&nbsp;253–256) and "Agent Overview" (pp.&nbsp;276–278); Ch.7 → "When to Finetune" incl. "Finetuning and RAG" (pp.&nbsp;311–318)</td></tr>
+    <tr><td class="u">06</td><td class="t">Why Evals Are the Whole Game</td><td class="s">[Hamel] "Your AI Product Needs Evals"</td></tr>
+    <tr><td class="u">07</td><td class="t">Defining "Good": Criteria &amp; Model Selection</td><td class="s">[AIE] Ch.4 → "Evaluation Criteria" (pp.&nbsp;160–179) + "Model Selection" (pp.&nbsp;179–199)</td></tr>
+    <tr><td class="u">08</td><td class="t">Prompting as an Engineering Discipline</td><td class="s">[AIE] Ch.5 → "Introduction to Prompting" (pp.&nbsp;212–218) + "Prompt Engineering Best Practices" (pp.&nbsp;220–233)</td></tr>
+    <tr><td class="u">09</td><td class="t">Designing the Eval Pipeline</td><td class="s">[AIE] Ch.4 → "Design Your Evaluation Pipeline" (pp.&nbsp;200–208)</td></tr>
+    <tr><td class="u">10</td><td class="t">The Production Architecture, Assembled</td><td class="s">[AIE] Ch.10 → "AI Engineering Architecture," Steps 1–5 (pp.&nbsp;449–465)</td></tr>
+    <tr><td class="u">11</td><td class="t">Data Curation: The Unsexy Blocker</td><td class="s">[AIE] Ch.8 → "Data Curation" (pp.&nbsp;365–380)</td></tr>
+    <tr><td class="u">12</td><td class="t">Cost &amp; Latency</td><td class="s">[AIE] Ch.9 → "Inference Overview" + "Inference Performance Metrics" (pp.&nbsp;406–419)</td></tr>
+    <tr><td class="u">13</td><td class="t">Capstone (CORE checkpoint)</td><td class="s">None — produced, not read.</td></tr>
+
+    <tr class="grouphdr"><td colspan="3">DEPTH — pulled in on demand (Units 14–24)</td></tr>
+    <tr class="depth"><td class="u">14</td><td class="t">Error Analysis &amp; the Improvement Flywheel</td><td class="s">[Hamel] "A Field Guide to Rapidly Improving AI Products"</td></tr>
+    <tr class="depth"><td class="u">15</td><td class="t">LLM-as-Judge, Done Properly</td><td class="s">[Hamel] "Creating a LLM-as-a-Judge That Drives Business Results" · then [AIE] Ch.3 → "AI as a Judge" (pp.&nbsp;136–148)</td></tr>
+    <tr class="depth"><td class="u">16</td><td class="t">Evals Reference Shelf</td><td class="s">[Hamel] "LLM Evals FAQ" and "'It's Hard to Eval' Is a Product Smell" · optional paid course (above)</td></tr>
+    <tr class="depth"><td class="u">17</td><td class="t">RAG Internals: Retrieval Quality</td><td class="s">[AIE] Ch.6 → "Retrieval Algorithms" (pp.&nbsp;257–268) + "Retrieval Optimization" (pp.&nbsp;268–273) + "RAG Beyond Texts" (pp.&nbsp;273–275)</td></tr>
+    <tr class="depth"><td class="u">18</td><td class="t">Agent Internals</td><td class="s">[AIE] Ch.6 → "Tools" (pp.&nbsp;278–281) + "Planning" (pp.&nbsp;281–298) + "Agent Failure Modes and Evaluation" (pp.&nbsp;298–300) + "Memory" (pp.&nbsp;300–305)</td></tr>
+    <tr class="depth"><td class="u">19</td><td class="t">Finetuning: What It Actually Involves</td><td class="s">[AIE] Ch.7 → "Finetuning Overview" (pp.&nbsp;308–311) + "Finetuning Tactics" (pp.&nbsp;357–360)</td></tr>
+    <tr class="depth"><td class="u">20</td><td class="t">Synthetic Data &amp; Distillation</td><td class="s">[AIE] Ch.8 → "Data Augmentation and Synthesis" (pp.&nbsp;380–396)</td></tr>
+    <tr class="depth"><td class="u">21</td><td class="t">Monitoring, Observability &amp; Feedback</td><td class="s">[AIE] Ch.10 → "Monitoring and Observability" + "AI Pipeline Orchestration" (pp.&nbsp;465–474) + "User Feedback" (pp.&nbsp;474–492)</td></tr>
+    <tr class="depth"><td class="u">22</td><td class="t">Defensive Prompting</td><td class="s">[AIE] Ch.5 → "Defensive Prompt Engineering" (pp.&nbsp;235–251)</td></tr>
+    <tr class="depth"><td class="u">23</td><td class="t">Where Foundation Models Come From</td><td class="s">[AIE] Ch.2 → "Training Data" (pp.&nbsp;50–58) + "Post-Training" (pp.&nbsp;78–88)</td></tr>
+    <tr class="depth"><td class="u">24</td><td class="t">Foundation-Model Evaluation Concepts</td><td class="s">[AIE] Ch.3 → "Challenges of Evaluating Foundation Models" (pp.&nbsp;114–118) + "Exact Evaluation" (pp.&nbsp;125–136) + "Ranking Models with Comparative Evaluation" (pp.&nbsp;148–156)</td></tr>
+  </table>
+
+  <h2>Reading views &amp; threads</h2>
+  <p>The units can be read in several deliberate orders beyond the default sequence:</p>
+  <div class="threads">
+    <div class="thread"><b>Full CORE pass</b> — the complete standalone operating model.<div class="seq">01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13</div></div>
+    <div class="thread"><b>The eval thread</b> — highest-leverage for the PM role; woven through the sequence rather than grouped.<div class="seq">06 → 07 → 09 → 14 → 15 → 16</div></div>
+    <div class="thread"><b>The architecture thread</b> — from the foundational distinction to the deep dives.<div class="seq">04 → 05 → 10 → 17 → 18 → 19</div></div>
+    <div class="thread"><b>"We're launching next month"</b> — the pre-launch essentials.<div class="seq">09 → 10 → 21 → 22</div></div>
+    <div class="thread"><b>Executive education</b> — the conceptual grounding for stakeholders.<div class="seq">01 → 02 → 23 → 03</div></div>
+  </div>
+
+  <h2>A note on how sources were used</h2>
+  <p>Each unit distilled and reframed its source(s) for a product-management audience — translating engineering depth into the decisions and questions a PM actually owns, rather than reproducing the material. The units themselves carry no inline citations by design; this page is the single, textbook-style home for all attribution and further reading. Page ranges follow the book's official table of contents and are inclusive of the named section, stopping where the next section begins.</p>
+
+  <p>Deliberate exclusions across the series — model internals and information-theory math ([AIE] pp.&nbsp;58–77, 96–105, 118–124), finetuning memory/quantization math (pp.&nbsp;319–356), and accelerator/kernel optimization (pp.&nbsp;419–447) — are the engineers' pages, left out by design to keep the curriculum on the role boundary a PM operates within.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <span class="num">Applied GenAI Curriculum for AI PMs</span> · 24 units + capstone + references · Series complete · <a href="../course.html">Back to syllabus</a>
+  </div>
+
+</div>
+</body>
+</html>

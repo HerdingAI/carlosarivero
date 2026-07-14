@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Systematic error analysis — open coding, axial coding, criteria drift, strategic sampling — and why looking at your data beats building infrastructure. The highest-ROI unit in the series.">
+<title>Unit 14 — Error Analysis &amp; the Improvement Flywheel</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --eval:#6b4d8a; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.depth{background:var(--depth); color:#fff}
+  .pill.thread{background:var(--eval); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* process flow */
+  .flow{margin:24px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .fstep{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:15px 18px 15px 54px;
+    margin:10px 0; position:relative; border-left-width:5px; border-left-color:var(--depth)}
+  .fstep .n{position:absolute; left:13px; top:15px; background:var(--depth); color:#fff; width:30px; height:30px;
+    border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px}
+  .fstep h4{margin:0 0 4px; font-size:1.08rem}
+  .fstep h4 .star{color:#c99a3b; font-size:.85rem; margin-left:6px}
+  .fstep p{margin:0; font-size:14.5px; color:#555}
+
+  /* coding example */
+  .code-ex{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:20px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:14px}
+  .code-ex .lbl{font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#888; margin-bottom:6px}
+  .code-ex .note{background:#faf2e8; border-left:3px solid #c99a3b; padding:8px 12px; border-radius:0 6px 6px 0; margin:4px 0; color:#5a4a2a; font-style:italic}
+  .code-ex .arrow{text-align:center; color:#aaa; margin:10px 0; font-size:13px; font-weight:700}
+  .code-ex .cat{display:flex; justify-content:space-between; padding:6px 12px; border-radius:6px; background:#eef3ef; margin:4px 0; color:#3a5c3a}
+  .code-ex .cat b{font-weight:700}
+  .code-ex .cat .ct{background:#5c8a5c; color:#fff; border-radius:20px; padding:1px 9px; font-size:12px; font-weight:700}
+
+  .how{background:#eef3ef; border:1px solid #cfe3d6; border-radius:12px; padding:18px 20px; margin:24px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .how h3{margin:0 0 10px; font-size:1.12rem; color:#2f6f4f}
+  .how ol{margin:0; padding-left:20px}
+  .how li{margin:8px 0; font-size:14.5px; color:#33503a}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Depth Layer &nbsp;·&nbsp; Eval Thread 3/5</p>
+  <h1><span class="num">Unit 14</span> — Error Analysis &amp; the Improvement Flywheel</h1>
+  <p class="lead">Systematic error analysis — open coding, axial coding, criteria drift, strategic sampling — and why looking at your data beats building infrastructure. The highest-ROI unit in the series.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">evals</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill depth">DEPTH — do this one early</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Run — or coach your team through — a 30-minute error-analysis session on real traces.</div></div>
+    <div class="row"><div class="lbl">Depends on</div><div class="val">Units 06 (why evals) and 09 (the pipeline that logs the traces). Pull this in right after Unit 09 — it's the highest-ROI unit in the whole series.</div></div>
+  </div>
+
+  <h2>Why this is the highest-ROI unit</h2>
+  <p>The core claim of the entire eval discipline compresses to three words: <strong>look at your data.</strong> Not dashboards, not generic metrics, not an off-the-shelf eval framework — read your actual production traces and catalog how the product fails. Teams that adopt this consistently find their highest-ROI improvements here, and in real projects <strong>60–80% of development time goes to error analysis and evaluation</strong>, not building automated checks. This unit is a DEPTH one, but it's the one to reach for first — ideally right after you've designed the pipeline in Unit 09.</p>
+
+  <div class="callout">
+    <span class="h">First, what's a trace?</span>
+    A <span class="keyterm">trace</span> is the complete record of a single user session — every message, tool call, retrieval, and response from the first query to the final answer. Error analysis is the practice of reading traces and cataloging failures. Everything below operates on traces.
+  </div>
+
+  <h2>The error-analysis process</h2>
+  <p>It's a four-step loop borrowed from qualitative research. It is low-tech on purpose — a notebook or a simple custom viewer, a human, and real traces.</p>
+
+  <div class="flow">
+    <div class="fstep"><span class="n">1</span><h4>Create a dataset</h4><p>Gather representative traces of real user interactions. No data yet? Generate structured synthetic traces to bootstrap (more on that below).</p></div>
+    <div class="fstep"><span class="n">2</span><h4>Open coding</h4><p>A human reads each trace and writes open-ended notes on what went wrong — like journaling. Focus on the <em>first</em> failure in a trace, since upstream errors cause downstream ones. A domain expert must do this step.</p></div>
+    <div class="fstep"><span class="n">3</span><h4>Axial coding <span class="star">★ most important</span></h4><p>Group those raw notes into a <strong>failure taxonomy</strong> — distinct categories — then <em>count</em> how many traces fall in each. An LLM can help cluster, but you own the categories.</p></div>
+    <div class="fstep"><span class="n">4</span><h4>Iterate to saturation</h4><p>Keep reading traces until you hit <span class="keyterm">theoretical saturation</span> — new traces stop revealing new failure modes. Rule of thumb: review at least 100; if ~20 in a row surface no new category, you can stop.</p></div>
+  </div>
+
+  <div class="code-ex">
+    <div class="lbl">Open coding — raw notes on individual traces</div>
+    <div class="note">"Bot gave the return window but never asked if the item was final-sale."</div>
+    <div class="note">"Prospect asked about pets twice; bot answered once then ignored the repeat."</div>
+    <div class="note">"Answer was correct but 4 paragraphs for a yes/no question."</div>
+    <div class="arrow">↓ axial coding — group &amp; count across 100 traces ↓</div>
+    <div class="cat"><b>Missed clarifying question</b><span class="ct">23</span></div>
+    <div class="cat"><b>Dropped repeated user intent</b><span class="ct">11</span></div>
+    <div class="cat"><b>Verbosity on simple queries</b><span class="ct">8</span></div>
+  </div>
+  <p>The counts are the payoff: they tell you which failure to fix <em>first</em>. The goal isn't to catalog every possible failure — it's to prioritize the ones that actually happen most.</p>
+
+  <div class="callout">
+    <span class="h">Criteria drift — why you can't outsource this to an LLM</span>
+    You need criteria to grade outputs — but <em>grading outputs is how you discover your criteria.</em> This is <span class="keyterm">criteria drift</span>: people don't know what "good" means until they see the model's actual outputs. You only learn you need, say, objection-handling after reading a trace where a prospect walked away. A team can't hand a tool context it hasn't discovered yet — which is exactly why looking at data beats delegating evaluation to a generic judge.
+  </div>
+
+  <h2>Who does it: the benevolent dictator</h2>
+  <p>Use <strong>one domain expert</strong> who understands your users as the single quality decision-maker — a "benevolent dictator." This matters because error analysis builds the product intuition that only comes from systematically seeing failures. Outsourcing it to people without domain expertise produces superficial or wrong labels and is usually a serious mistake. For a PM, this is often <em>your</em> seat, or one you sit in beside the expert.</p>
+  <div class="callout">
+    <span class="h">Binary labels beat 1–5 scores</span>
+    Label failures as pass/fail, not on a scale. Binary forces a decision instead of hiding uncertainty in a "3," and it's faster — you don't burn the session debating whether something is a 3 or a 4. Write evaluators for the errors you actually <em>found</em>, never the ones you imagine.
+  </div>
+
+  <h2>The most important investment: a friction-free data viewer</h2>
+  <p>The single biggest enabler is a custom trace viewer that removes <em>all</em> friction from looking at data and renders traces in domain-specific ways — pulling everything you need onto one screen. These can be built in well under a day with a notebook or an AI coding assistant. If reading a trace is annoying, the team won't do it, and the whole flywheel stalls.</p>
+
+  <h2>Bootstrapping data when you have none</h2>
+  <p>No production traffic yet? Generate synthetic traces — but <em>structured</em>, not "give me test queries" (which yields generic mush). Define <strong>dimensions</strong> of user variation, then combine them:</p>
+  <table class="tbl">
+    <tr><td>1. Define dimensions</td><td>Axes of variation — e.g. for support: Issue Type × Customer Mood × Prior Context.</td></tr>
+    <tr><td>2. Write ~20 tuples by hand</td><td>Specific combos like <code>(billing, frustrated, follow-up)</code> — this teaches you the problem space.</td></tr>
+    <tr><td>3. Scale in two steps</td><td>LLM generates more tuples, then a <em>separate</em> prompt turns each into natural language (avoids repetitive phrasing).</td></tr>
+    <tr><td>4. Run &amp; sample</td><td>Push queries through the real system, capture traces, sample ~100 for error analysis.</td></tr>
+  </table>
+  <p>Two cautions: fix obvious problems directly rather than generating tests for them, and distrust synthetic data in complex/high-stakes/low-resource domains where it misses the real edge cases.</p>
+
+  <h2>Making it a flywheel — and selling it</h2>
+  <p>Error analysis isn't one-and-done. Re-run it whenever you make significant changes (new feature, prompt update, model switch, big bug fix), aiming for 100+ fresh traces per cycle (typically every 2–4 weeks), with 10–20 outlier traces reviewed weekly in between. Over time you develop a "nose" for where failures hide, and strategic sampling (outliers, user-feedback sorting, clustering) makes each pass sharper.</p>
+  <div class="callout">
+    <span class="h">How to sell evals to a skeptical team: don't</span>
+    Don't pitch "evals." Do the error analysis yourself on 50–100 real conversations, then <strong>tell a story with the data</strong> — the top failure modes, how often the costly ones happen, surprising user behavior, and bugs you already fixed (framed as "prevented production issues"). Show the error rate for a specific problem dropping after your fix. Let results lead; the team will ask how you did it. And measure your roadmap in <em>experiments run</em>, not features shipped.
+  </div>
+
+  <div class="how">
+    <h3>Run a 30-minute error-analysis session</h3>
+    <ol>
+      <li>Pull ~20–50 recent real traces into a friction-free viewer.</li>
+      <li>Open-code: for each, jot the <em>first</em> thing that went wrong (binary: acceptable / not).</li>
+      <li>Axial-code: cluster your notes into 4–8 failure categories and count them.</li>
+      <li>Rank by frequency × impact — the top one or two are your next work.</li>
+      <li>Fix the obvious bugs immediately; write an eval only for failures worth automating.</li>
+      <li>Note what surprised you, and schedule the next pass (2–4 weeks or after the next big change).</li>
+    </ol>
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Run the open → axial → iterate loop on real traces and stop at theoretical saturation (~100 traces / 20-no-new heuristic).</li>
+      <li>Explain criteria drift — and why it means evaluation can't be fully outsourced to a generic LLM judge.</li>
+      <li>Set up a benevolent dictator, binary labels, and a friction-free data viewer.</li>
+      <li>Bootstrap with structured (dimension-based) synthetic data when you lack traffic — and know when not to trust it.</li>
+      <li>Sell the practice by telling a story with data, and run a 30-minute session start to finish.</li>
+    </ul>
+  </div>
+  <p>Error analysis surfaces failures; some you fix directly, others you automate with an evaluator. When that evaluator is an LLM judge, it has to be validated — which is exactly the next unit.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 14 of 24 · Depth layer · Tag: <em>evals</em> · Eval thread 3/5 · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong><a href="unit-15-llm-as-judge.html" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid rgba(180,85,45,.35)">Unit 15 — LLM-as-Judge, Done Properly</a></strong></div>
+  </div>
+
+</div>
+</body>
+</html>

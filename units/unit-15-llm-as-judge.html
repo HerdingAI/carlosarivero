@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="When AI-graded evals can be trusted: binary pass/fail over Likert scores, validating the judge against human labels, and the judge's own biases and limits.">
+<title>Unit 15 — LLM-as-Judge, Done Properly</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --eval:#6b4d8a; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.depth{background:var(--depth); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:24%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* binary vs likert */
+  .vs{display:flex; gap:14px; margin:24px 0; flex-wrap:wrap; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .vs .c{flex:1; min-width:230px; border-radius:12px; padding:16px 18px}
+  .vs .no{background:#f7ecec; border:1px solid #e3c4c4}
+  .vs .yes{background:#eef3ef; border:1px solid #cfe3d6}
+  .vs .c h4{margin:0 0 6px; font-size:1.05rem}
+  .vs .no h4{color:#a23b3b} .vs .yes h4{color:#2f6f4f}
+  .vs .c p{margin:0; font-size:14px; color:#555}
+
+  /* critique shadowing steps */
+  .cs{margin:24px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .cs .s{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px 14px 52px;
+    margin:10px 0; position:relative; border-left-width:5px; border-left-color:var(--eval)}
+  .cs .s .n{position:absolute; left:13px; top:14px; background:var(--eval); color:#fff; width:28px; height:28px;
+    border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px}
+  .cs .s h4{margin:0 0 3px; font-size:1.02rem}
+  .cs .s p{margin:0; font-size:14px; color:#555}
+
+  /* critique example */
+  .crit{background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin:20px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:14px}
+  .crit .r{display:flex; border-bottom:1px solid var(--line)}
+  .crit .r:last-child{border-bottom:0}
+  .crit .r .io{flex:1; padding:11px 14px}
+  .crit .r .j{flex:0 0 70px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px}
+  .crit .r .j.pass{background:#eef3ef; color:#2f6f4f} .crit .r .j.fail{background:#f7ecec; color:#a23b3b}
+  .crit .r .cx{flex:2; padding:11px 14px; color:#555; font-size:13px; border-left:1px solid var(--line)}
+  .crit .hdr{background:#f4f1ea; font-weight:700; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:#888}
+  .crit .hdr .io,.crit .hdr .j,.crit .hdr .cx{padding:8px 14px}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+    .crit .r{flex-wrap:wrap} .crit .cx{border-left:0; flex-basis:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Depth Layer &nbsp;·&nbsp; Eval Thread 4/5</p>
+  <h1><span class="num">Unit 15</span> — LLM-as-Judge, Done Properly</h1>
+  <p class="lead">When AI-graded evals can be trusted: binary pass/fail over Likert scores, validating the judge against human labels, and the judge's own biases and limits.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">evals</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill depth">DEPTH — when your team proposes automating evaluation</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Tell a calibrated judge from an unvalidated one — and refuse to ship decisions on the latter.</div></div>
+    <div class="row"><div class="lbl">Depends on</div><div class="val">Unit 06 (why evals). Pairs naturally with Unit 14 (error analysis produces the labeled data a judge is built from).</div></div>
+  </div>
+
+  <h2>Why this unit exists</h2>
+  <p>Sooner or later a team says "let's have an LLM grade the outputs so we can scale evaluation." That's a fine instinct — human review doesn't scale — but an <em>unvalidated</em> LLM judge is worse than no metric, because it launders guesses into official-looking numbers. This unit gives you the two things a PM needs: how a trustworthy judge is actually <em>built</em>, and how to tell a calibrated one from a decorative one. The rule you leave with: <strong>never ship a decision on a judge that hasn't been validated against human labels.</strong></p>
+
+  <h2>1. Binary pass/fail beats 1–5 scores</h2>
+  <p>The most common mistake is a dashboard of metrics scored 1–5 by an LLM. It looks rigorous; it's usually noise. Start binary.</p>
+
+  <div class="vs">
+    <div class="c no">
+      <h4>✕ Likert (1–5) scales</h4>
+      <p>The gap between 3 and 4 is subjective and inconsistent across graders. Annotators hide uncertainty in the middle. Detecting a real difference needs bigger samples. Worst: these scores usually don't correlate with what the domain expert actually cares about.</p>
+    </div>
+    <div class="c yes">
+      <h4>✓ Binary pass/fail</h4>
+      <p>Forces a real decision — "passed because…", "failed because…". Faster to label, clearer to act on, and it makes the grader articulate what actually matters. Track gradual progress by splitting into multiple binary checks (e.g. "4 of 5 expected facts present"), not a scale.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="h">Hold the line</span>
+    Someone will insist "the business says these 8 dimensions matter, score them all 1–5." That usually means they don't yet know what they're looking for. Let the domain expert drive with pass/fail + critiques, and the dimensions that truly matter will surface. Numeric scales are an advanced tool, rarely needed early.
+  </div>
+
+  <h2>2. How a trustworthy judge is built: Critique Shadowing</h2>
+  <p>The method for producing a judge you can actually trust. Note it starts and ends with a human — the LLM judge is the <em>output</em>, not the starting point.</p>
+
+  <div class="cs">
+    <div class="s"><span class="n">1</span><h4>Find the principal domain expert</h4><p>One person whose judgment defines "good" for this product (a lawyer for legal AI, a support director for a support bot). Not a convenient proxy — one authoritative voice, or evaluations fracture into conflicting opinions.</p></div>
+    <div class="s"><span class="n">2</span><h4>Build a diverse dataset</h4><p>Cover the interactions you'll see in production, structured by dimensions that fit your case (e.g. features × scenarios × personas). Real data is best; structured synthetic user inputs fill gaps.</p></div>
+    <div class="s"><span class="n">3</span><h4>Expert makes pass/fail judgments + critiques</h4><p>One question: "did the AI achieve the desired outcome?" Plus a written critique explaining <em>why</em>. The critique is the gold — it forces the expert to externalize unspoken criteria.</p></div>
+    <div class="s"><span class="n">4</span><h4>Fix obvious errors first</h4><p>Error analysis will surface plain bugs — fix them now rather than building a judge to detect what you can just repair. Re-stabilize, then continue.</p></div>
+    <div class="s"><span class="n">5</span><h4>Build the judge iteratively</h4><p>Write a judge prompt using the expert's critiques as few-shot examples (each: input, output, critique, pass/fail). You can't write a good judge prompt until you've seen the data — criteria drift again.</p></div>
+    <div class="s"><span class="n">6</span><h4>Iterate to convergence with the expert</h4><p>Compare judge vs. expert on fresh examples, refine the prompt, repeat until they agree. Then apply the judge at scale and compute error rates by dimension.</p></div>
+  </div>
+
+  <div class="crit">
+    <div class="r hdr"><div class="io">Interaction</div><div class="j">Verdict</div><div class="cx">Critique (the part that matters)</div></div>
+    <div class="r"><div class="io">"Cancel my flight for next week." → "Done, confirmation sent."</div><div class="j pass">Pass</div><div class="cx">Achieved the goal, though it should have confirmed before cancelling. Passes overall; add a confirm step.</div></div>
+    <div class="r"><div class="io">"I need help with my billing statement." → "Give me your account number and full name."</div><div class="j fail">Fail</div><div class="cx">Requested sensitive info without secure identity verification — a security oversight. Fails.</div></div>
+  </div>
+  <p>Critiques must be detailed enough to drop into a few-shot judge prompt — "a new employee could follow it." Terse critiques are the most common judge-prompt mistake.</p>
+
+  <h2>3. Validate the judge — the step that separates trust from theater</h2>
+  <p>A judge is only worth its <strong>agreement with the human expert</strong>. Track alignment as you iterate; the Honeycomb example reached &gt;90% agreement in three iterations. But <em>how</em> you measure alignment matters:</p>
+  <div class="callout">
+    <span class="h">Don't trust raw agreement on imbalanced data</span>
+    Raw agreement is fine only when passes and fails are roughly balanced. When one class dominates, a judge that always says "pass" can score 90% agreement while being useless. Measure <strong>precision and recall separately</strong> (or true-positive and true-negative rates) so a judge can't hide behind the majority class. This is the number a PM should ask for before trusting any automated eval.
+  </div>
+  <p>An unexpected bonus: building the judge makes the <em>expert</em> sharper. Reading the LLM's critiques, they realize where their own judgments were inconsistent — the process standardizes the criteria and surfaces new product insight, often worth more than the judge itself.</p>
+
+  <h2>4. The judge's own limitations and biases</h2>
+  <p>An AI judge is still an AI application, so it inherits every weakness in this curriculum — plus some specific to judging. Know these so you interpret (and discount) scores correctly:</p>
+  <table class="tbl">
+    <tr><td>Inconsistency</td><td>Same judge, same input, different score across runs — it's probabilistic. Examples in the prompt raise consistency, but consistent ≠ accurate (it may consistently repeat a mistake), and longer prompts cost more.</td></tr>
+    <tr><td>Criteria ambiguity</td><td>Judge metrics aren't standardized — "faithfulness" means different prompts and scales in different tools. Two "faithfulness" scores aren't comparable.</td></tr>
+    <tr><td>Cost &amp; latency</td><td>A judge in the request path adds latency and cost; evaluating before returning to users trades risk for wait — sometimes a nonstarter.</td></tr>
+  </table>
+  <table class="tbl">
+    <tr><th>Bias</th><th>What it does</th></tr>
+    <tr><td>Self-bias</td><td>A model favors its own outputs (one model rated itself ~25% higher). Be wary of a judge grading its own family.</td></tr>
+    <tr><td>Position / first bias</td><td>In pairwise comparisons it tends to favor the first option. Mitigate by re-running with orders swapped. (Humans have the opposite — recency bias.)</td></tr>
+    <tr><td>Verbosity bias</td><td>Prefers longer answers regardless of quality — sometimes even a longer wrong answer over a short correct one. Fades with stronger models.</td></tr>
+  </table>
+  <p><strong>Which model should judge?</strong> Stronger, weaker, or the same — each has trade-offs. A common, cost-smart pattern: a cheap model generates all responses, a strong model judges just a 1% sample. Two catches: the strongest model has no eligible judge, and self-evaluation (a model judging itself) is good for sanity checks but suspect for scoring, thanks to self-bias. Whatever you pick, the judge should <em>supplement</em> exact metrics and human review — never fully replace them.</p>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Insist on binary pass/fail + critiques over 1–5 Likert dashboards, and explain why.</li>
+      <li>Recognize a properly-built judge (Critique Shadowing: expert → data → pass/fail → judge → convergence) vs. one bolted on from a framework default.</li>
+      <li>Demand validation against human labels — measured by precision/recall, not raw agreement on imbalanced data.</li>
+      <li>Name the judge's biases (self, position, verbosity) and limits (inconsistency, criteria ambiguity, cost) and discount scores accordingly.</li>
+      <li>Refuse to ship a decision on an unvalidated judge — the whole point of the unit.</li>
+    </ul>
+  </div>
+  <p>That's the last <em>method</em> unit of the eval thread. The final piece is a reference shelf for the specific questions that come up mid-project — Unit 16.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 15 of 24 · Depth layer · Tag: <em>evals</em> · Eval thread 4/5 · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong><a href="unit-16-evals-reference-shelf.html" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid rgba(180,85,45,.35)">Unit 16 — Evals Reference Shelf</a></strong></div>
+  </div>
+
+</div>
+</body>
+</html>

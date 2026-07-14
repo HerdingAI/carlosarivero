@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Why foundation models are uniquely hard to evaluate, exact evaluation, and comparative / arena-style ranking — enough to parse vendor benchmark claims critically.">
+<title>Unit 24 — Foundation-Model Evaluation Concepts</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --eval:#6b4d8a; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.depth{background:var(--depth); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* challenge cards */
+  .ch{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:24px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .ch .c{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; border-left:4px solid var(--eval)}
+  .ch .c h4{margin:0 0 4px; font-size:1rem}
+  .ch .c p{margin:0; font-size:13.5px; color:#555}
+  @media (max-width:600px){.ch{grid-template-columns:1fr}}
+
+  /* two eval families */
+  .fam{display:flex; gap:14px; margin:22px 0; flex-wrap:wrap; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .fam .f{flex:1; min-width:250px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:15px 17px; border-top-width:4px}
+  .fam .fc{border-top-color:#5c8a5c} .fam .sm{border-top-color:#c99a3b}
+  .fam .f h4{margin:0 0 6px; font-size:1.04rem}
+  .fam .f p{margin:0; font-size:14px; color:#555}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Depth Layer &nbsp;·&nbsp; Optional Background</p>
+  <h1><span class="num">Unit 24</span> — Foundation-Model Evaluation Concepts</h1>
+  <p class="lead">Why foundation models are uniquely hard to evaluate, exact evaluation, and comparative / arena-style ranking — enough to parse vendor benchmark claims critically.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">evals</span><span class="pill">vocab</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill depth">DEPTH — if eval conversations with researchers or vendors go over your head</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Parse vendor benchmark claims critically.</div></div>
+    <div class="row"><div class="lbl">Depends on</div><div class="val">Unit 06 (why evals). This is the research-facing complement to the applied eval thread.</div></div>
+  </div>
+
+  <h2>Why this optional unit exists</h2>
+  <p>The eval thread (06 → 16) was about evaluating <em>your product</em>. This unit is about evaluating <em>the models themselves</em> — the vocabulary researchers and vendors use when they say "we top the leaderboard" or "89% on MMLU." You can build great products without it, but when a vendor waves a benchmark number, this is what lets you ask the right skeptical question instead of nodding along. It complements, from the research side, the "why public benchmarks mislead" material back in Unit 07.</p>
+
+  <h2>1. Why foundation models are uniquely hard to evaluate</h2>
+  <p>Evaluating any ML model is hard; foundation models are harder, for reasons worth naming:</p>
+  <div class="ch">
+    <div class="c"><h4>Smarter = harder to grade</h4><p>Anyone can mark a first-grader's math; few can grade a PhD proof. Judging a coherent-but-possibly-wrong summary may require reading the whole book first.</p></div>
+    <div class="c"><h4>Open-ended breaks ground truth</h4><p>Classic ML is close-ended (output vs. expected category). Open-ended tasks have countless valid answers — you can't curate a complete list to compare against.</p></div>
+    <div class="c"><h4>Black boxes</h4><p>Providers often hide architecture, data, and training. Without those, you can only judge a model by its outputs.</p></div>
+    <div class="c"><h4>Benchmarks saturate fast</h4><p>Models hit perfect scores and the benchmark dies — GLUE → SuperGLUE, MMLU → MMLU-Pro. A leaderboard win ages quickly.</p></div>
+  </div>
+  <p>A fifth wrinkle: general-purpose models mean evaluation isn't just measuring known tasks but <em>discovering</em> what the model can do. And bluntly — evaluation is under-invested relative to modeling, so infrastructure is thin and a lot of teams still "just eyeball it."</p>
+  <div class="callout">
+    <span class="h">The frame this sets up</span>
+    Every hard part above is a reason a single benchmark number can't capture a model's real quality. So when you see one, the reflex is: <em>hard at what, judged how, and does it match my task?</em>
+  </div>
+
+  <h2>2. Exact evaluation — when a score is unambiguous</h2>
+  <p><span class="keyterm">Exact evaluation</span> produces judgment without ambiguity (pick B when the answer is A → wrong). Contrast with <em>subjective</em> evaluation (essay grading, AI-as-judge) where the score shifts with the grader. Two exact approaches:</p>
+
+  <div class="fam">
+    <div class="f fc">
+      <h4>Functional correctness</h4>
+      <p>Did it actually do the job? For code, run it: does <code>gcd(15,20)</code> return 5? Automatable for anything with a measurable objective — code (HumanEval), text-to-SQL, game bots, optimization tasks. The ultimate metric, but not always automatable.</p>
+    </div>
+    <div class="f sm">
+      <h4>Similarity vs. reference data</h4>
+      <p>Compare the output to a known-correct answer <code>(input → reference response)</code>. Human references treat human performance as the gold standard. Bottlenecked by how fast you can produce references — increasingly AI-generated, then human-reviewed.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="h">Decode "pass@k" — the metric behind most coding claims</span>
+    A model generates <em>k</em> code samples per problem; it "solves" the problem if <em>any</em> of them passes all tests. <strong>pass@k</strong> is the fraction solved. The catch: more samples = more chances, so pass@10 &gt; pass@3 &gt; pass@1 for the same model. A vendor quoting "pass@10" is a weaker claim than the same number at pass@1 — always check the <em>k</em>.
+  </div>
+  <p>For similarity metrics, "reference-based" needs a gold answer; "reference-free" doesn't (usable in production where there's no ground truth). And a recurring trap: <strong>low-quality reference data poisons the score</strong> — a correct translation can be marked wrong just because it wasn't in the reference set.</p>
+
+  <h2>3. Comparative / arena-style ranking</h2>
+  <p>Often you don't care about a model's absolute score — you want to know <em>which is best</em>. Two ways to rank:</p>
+  <table class="tbl">
+    <tr><td>Pointwise</td><td>Score each model alone, then sort. Like scoring each dancer individually.</td></tr>
+    <tr><td>Comparative</td><td>Put models head-to-head and ask which wins. Easier for subjective quality — telling which of two songs is better beats scoring each. This powers arena leaderboards (Chatbot Arena) and the "which response is better?" prompts you've seen in ChatGPT.</td></tr>
+  </table>
+  <p>Each head-to-head is a <em>match</em>; the fraction A beats B is A's <span class="keyterm">win rate</span>. With many models, a rating algorithm (Elo, Bradley–Terry, TrueSkill — borrowed from chess and games) turns match histories into a ranking. Key insight: <strong>a ranking is really a prediction</strong> — there's no ground-truth "correct" ranking; a good one predicts future match outcomes well.</p>
+
+  <div class="callout">
+    <span class="h">The three ways arena rankings can mislead</span>
+    <strong>Scalability:</strong> pairs grow quadratically, so even hundreds of thousands of votes average out to thin coverage per pair (and per task). <strong>Transitivity may not hold:</strong> rankings assume A&gt;B and B&gt;C implies A&gt;C, but human preference isn't always transitive. <strong>No standardization:</strong> crowd voters use any prompt with no shared bar — they may prefer answers that <em>sound</em> better but are factually wrong, and "preference in the wild" may not fit your use case (a model that refuses an inappropriate joke gets downvoted).
+  </div>
+
+  <div class="callout">
+    <span class="h">The pitfall that matters most to a PM: preference ≠ correctness</span>
+    Not every question should be settled by preference. "Is there a link between cell-phone radiation and brain tumors?" has a <em>correct</em> answer, not a preferred one — and preference voting can train misaligned behavior. Comparative evaluation only works when voters actually <strong>know the subject</strong> — i.e. AI-as-assistant on tasks users can already do, not AI answering things users don't know. When a vendor cites arena wins, ask whether the questions were preference-appropriate or correctness questions dressed up as preferences.
+  </div>
+  <p>One more distinction to keep straight: comparative evaluation (two outputs shown <em>at once</em>, pick the better) is <strong>not</strong> A/B testing (one output per user, measure downstream behavior — Unit 06's Level 3).</p>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Explain why a single benchmark number can't capture a foundation model's quality (open-endedness, saturation, black boxes).</li>
+      <li>Read exact-evaluation claims — decode pass@k (and check the <em>k</em>), and spot reference-data quality as a failure point.</li>
+      <li>Understand arena/comparative rankings as <em>predictions</em>, and name their three weaknesses (scale, transitivity, standardization).</li>
+      <li>Apply the preference-vs-correctness test to any leaderboard claim — the single sharpest question to ask a vendor.</li>
+    </ul>
+  </div>
+  <p>That completes all 24 units. The series' shared reference list — every source, for further reading — follows as the closing page.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 24 of 24 · Depth layer · Tags: <em>evals · vocab</em> · Optional background · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong><a href="references-and-further-reading.html" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid rgba(180,85,45,.35)">References &amp; Further Reading</a></strong> (series close)</div>
+  </div>
+
+</div>
+</body>
+</html>

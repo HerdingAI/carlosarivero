@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Tool design, planning approaches, the agent failure-mode taxonomy, and memory systems — enough to contribute to agent scoping, especially the failure-mode budgeting where agent projects live or die.">
+<title>Unit 18 — Agent Internals: Tools, Planning, Failure Modes, Memory</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --arch:#5c7a99; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.depth{background:var(--depth); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* tool categories */
+  .tools{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin:24px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tools .t{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 15px; border-top-width:4px}
+  .tools .t h4{margin:0 0 5px; font-size:.98rem}
+  .tools .t p{margin:0; font-size:13px; color:#555}
+  .tools .k{border-top-color:#5c8a5c} .tools .cap{border-top-color:#5c7a99} .tools .w{border-top-color:#b4552d}
+  @media (max-width:600px){.tools{grid-template-columns:1fr}}
+
+  /* plan-execute loop */
+  .loop{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:22px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; display:flex; align-items:center;
+    justify-content:center; gap:8px; flex-wrap:wrap; font-size:13px}
+  .loop .n{border-radius:8px; padding:9px 13px; font-weight:600}
+  .loop .plan{background:#eef1f5; border:1.5px solid #5c7a99; color:#3a5069}
+  .loop .val{background:#faf2e8; border:1.5px solid #c99a3b; color:#8a6a1f}
+  .loop .exec{background:#eef3ef; border:1.5px solid #5c8a5c; color:#2f6f4f}
+  .loop .refl{background:var(--accent-soft); border:1.5px solid #b4552d; color:#8a3d22}
+  .loop .arr{color:#aaa; font-weight:700; font-size:15px}
+
+  /* failure taxonomy */
+  .fail{border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:14px 0; background:var(--card);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; border-left:5px solid #b4552d}
+  .fail h4{margin:0 0 6px; font-size:1.08rem}
+  .fail ul{margin:6px 0 0; padding-left:18px}
+  .fail li{margin:4px 0; font-size:14px; color:#555}
+  .fail li b{color:#444}
+
+  /* memory hierarchy */
+  .mem{margin:22px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .mem .m{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:13px 16px; margin:8px auto;
+    border-left-width:5px}
+  .mem .int{border-left-color:#5c8a5c; width:100%}
+  .mem .short{border-left-color:#c99a3b; width:82%}
+  .mem .long{border-left-color:#5c7a99; width:64%}
+  .mem .m h4{margin:0 0 2px; font-size:1rem}
+  .mem .m p{margin:0; font-size:13px; color:#555}
+  @media (max-width:600px){.mem .m{width:100%!important}}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Depth Layer &nbsp;·&nbsp; Architecture Thread</p>
+  <h1><span class="num">Unit 18</span> — Agent Internals: Tools, Planning, Failure Modes, Memory</h1>
+  <p class="lead">Tool design, planning approaches, the agent failure-mode taxonomy, and memory systems — enough to contribute to agent scoping, especially the failure-mode budgeting where agent projects live or die.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">architecture</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill depth">DEPTH — when an agent project is greenlit</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Contribute to agent scoping — especially failure-mode budgeting, which is where agent projects live or die.</div></div>
+    <div class="row"><div class="lbl">Depends on</div><div class="val">Units 04 (workflow vs. agent, the justification checklist) and 05 (the agent loop, compounding-error math).</div></div>
+  </div>
+
+  <h2>Why open up the agent</h2>
+  <p>Unit 04 taught you to <em>resist</em> agents until they're justified. This unit is for the moment one clears the bar and gets greenlit — because "we're building an agent" is not one decision, it's four: what <strong>tools</strong> it gets, how it <strong>plans</strong>, how you'll catch its <strong>failures</strong>, and how it <strong>remembers</strong>. The single most important of these for a PM is failure-mode budgeting — agents fail in more ways than any other system, and projects live or die on whether you planned for that.</p>
+
+  <h2>1. Tools — what the agent can actually do</h2>
+  <p>An agent's capabilities are defined by its <span class="keyterm">tool inventory</span>. Tools fall into three categories, escalating in power and risk:</p>
+
+  <div class="tools">
+    <div class="t k"><h4>Knowledge augmentation</h4><p>Read-only info gathering — retrievers, SQL executors, web/search APIs, email readers. Keeps the model current and grounded.</p></div>
+    <div class="t cap"><h4>Capability extension</h4><p>Fixes inherent weaknesses — calculator, code interpreter, unit/timezone converters, or another model (image gen, OCR, transcription) to add a modality.</p></div>
+    <div class="t w"><h4>Write actions</h4><p>Change the world — send email, place order, update a database, initiate a transfer. Power <em>and</em> danger live here.</p></div>
+  </div>
+
+  <div class="callout">
+    <span class="h">Write actions are the risk line</span>
+    Read-only tools make an agent smarter; write actions make it consequential. "You shouldn't give an intern authority to delete the production database" — same for an unreliable agent initiating transfers. For any write action, the PM question is: what's the blast radius, what verifies it before it fires, and does it need explicit human approval? Harm isn't only physical — an agent can move markets, leak data, or spread misinformation without ever touching the world.
+  </div>
+  <p><strong>Choosing tools</strong> is empirical, not a checklist. More tools = more capability but harder use (and longer descriptions that eat context). The moves: compare agent performance across tool sets; run an <em>ablation</em> (drop a tool — if performance holds, remove it); find tools the agent keeps misusing and simplify or swap them. Note different tasks and even different models prefer different tools.</p>
+
+  <h2>2. Planning — how the agent decides what to do</h2>
+  <p>A task is a <em>goal</em> plus <em>constraints</em> ("two-week SF→India trip" is the goal; "$5,000 budget" is the constraint). A <span class="keyterm">plan</span> is the roadmap of steps. The critical design choice:</p>
+  <div class="callout">
+    <span class="h">Decouple planning from execution</span>
+    You <em>can</em> let a model plan and execute in one shot — but then a bad 1,000-step plan runs for hours burning API money before anyone notices. Instead: generate a plan → <strong>validate</strong> it (cheap heuristics like "reject plans using tools it doesn't have" or "reject plans over X steps," or an AI judge) → only execute validated plans → reflect on the outcome. This is the single most important lever for controlling agent cost and risk.
+  </div>
+
+  <div class="loop">
+    <span class="n plan">Generate plan</span>
+    <span class="arr">→</span>
+    <span class="n val">Validate</span>
+    <span class="arr">→</span>
+    <span class="n exec">Execute</span>
+    <span class="arr">→</span>
+    <span class="n refl">Reflect / correct</span>
+    <span class="arr">↺</span>
+  </div>
+  <p><span class="keyterm">Reflection</span> (evaluate the plan, then evaluate the results — "did this actually accomplish the goal?") isn't mandatory but sharply improves performance. Humans can sit at any stage: provide a high-level plan, approve a risky step, or execute sensitive operations — so define the <em>level of automation allowed per action</em>.</p>
+  <div class="callout">
+    <span class="h">Can models even plan? (the honest caveat)</span>
+    It's genuinely contested. Planning is a search problem (explore paths, predict outcomes, sometimes backtrack), and some argue autoregressive models can't truly do it — that plans "look reasonable to a lay user yet fail at execution time." Others counter the models just lack the right tooling and can effectively backtrack by revising. The PM takeaway: <strong>don't assume the plan is sound because it reads well.</strong> That skepticism is exactly why validation and reflection exist.
+  </div>
+
+  <h2>3. The failure-mode taxonomy — the heart of this unit</h2>
+  <p>Evaluation is detecting failures, and agents have <em>more</em> failure surface than anything else. To evaluate an agent you <strong>identify its failure modes and measure how often each happens.</strong> Three families:</p>
+
+  <div class="fail">
+    <h4>Planning failures</h4>
+    <ul>
+      <li><b>Tool-use errors:</b> invalid tool (calls one it doesn't have); valid tool, wrong number of parameters; valid tool, wrong parameter values.</li>
+      <li><b>Goal failure:</b> doesn't solve the task, or solves it while breaking a constraint (plans the trip but blows the budget).</li>
+      <li><b>Time:</b> an often-overlooked constraint — a grant proposal finished after the deadline is worthless.</li>
+      <li><b>Reflection error:</b> the agent insists it finished when it didn't (assigns 40 of 50 people to rooms and declares success).</li>
+    </ul>
+  </div>
+  <div class="fail">
+    <h4>Tool failures</h4>
+    <ul>
+      <li>Right tool, <b>wrong output</b> (captioner mis-describes; SQL generator returns a wrong query).</li>
+      <li><b>Translation errors</b> turning a high-level action into an executable command.</li>
+      <li><b>Missing tool</b> — the task needs the internet and the agent has no web access. Test each tool independently; print every tool call and output.</li>
+    </ul>
+  </div>
+  <div class="fail">
+    <h4>Efficiency failures</h4>
+    <ul>
+      <li>A valid plan with the right tools that's still <b>too slow or too expensive</b>. Track average steps, cost, and time per task against a baseline (another agent or a human) — remembering "efficient" differs for humans vs. AI.</li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    <span class="h">Failure-mode budgeting — where agent projects live or die</span>
+    Before greenlighting, don't ask "will it work?" — ask <em>"which of these failure modes can we tolerate, at what rate, and what catches each one?"</em> Concretely: build a planning dataset of (task, tools) pairs, generate K plans per task, and measure — what fraction of plans are valid? how many tries to get a valid plan? what fraction of tool calls are valid? Those numbers are your budget. An agent shipped without them is an agent whose failure rate you'll discover in production.
+  </div>
+
+  <h2>4. Memory — what the agent retains</h2>
+  <p>Agents juggle instructions, context, tool outputs, plans, and reflections — usually more than fits in context. A memory system supplements it. Three mechanisms, mirroring human memory:</p>
+
+  <div class="mem">
+    <div class="m int"><h4>Internal knowledge</h4><p>What the model learned in training — always available, changes only if you retrain/finetune. (Like knowing how to breathe.)</p></div>
+    <div class="m short"><h4>Short-term memory (context)</h4><p>The conversation so far — fast, but capacity-limited by context length; holds what's most relevant right now. (The name of someone you just met.)</p></div>
+    <div class="m long"><h4>Long-term memory (external)</h4><p>External sources fetched via retrieval — persists across tasks, cheap to extend, deletable without retraining. (Your books and notes.)</p></div>
+  </div>
+  <p>Which to use depends on frequency: universal info → internal knowledge (training); rarely-needed → long-term; immediate → short-term. Memory buys real things: handling info overflow within a session, persisting preferences <em>between</em> sessions (an AI coach you don't re-explain your life to each time), boosting consistency, and preserving structure (store leads in a sheet, actions in a queue).</p>
+  <p>The hard part is managing limited short-term memory — deciding what to <strong>keep vs. drop</strong>. <span class="keyterm">FIFO</span> (drop the oldest) is simple but dangerous — the earliest message often states the whole purpose. Better strategies remove redundancy via running <em>summaries</em>, entity tracking, or reflection that decides whether new info should be added, merged, or replace outdated (contradictory) memory.</p>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Classify an agent's tools (knowledge / capability / write) and treat write actions as the risk line needing approval and blast-radius limits.</li>
+      <li>Insist on decoupled plan → validate → execute → reflect, and stay skeptical of plans that merely read well.</li>
+      <li>Name the agent failure taxonomy (planning, tool, efficiency) and run failure-mode budgeting with concrete plan/tool-validity metrics before greenlight.</li>
+      <li>Reason about the memory hierarchy and the keep-vs-drop problem (FIFO's danger, summary/reflection strategies).</li>
+    </ul>
+  </div>
+  <p>That's the agent deep dive. The last architecture-thread deep dive is finetuning — Unit 19 — for when someone seriously proposes changing model weights.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 18 of 24 · Depth layer · Tag: <em>architecture</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong><a href="unit-19-finetuning.html" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid rgba(180,85,45,.35)">Unit 19 — Finetuning: What It Actually Involves</a></strong></div>
+  </div>
+
+</div>
+</body>
+</html>

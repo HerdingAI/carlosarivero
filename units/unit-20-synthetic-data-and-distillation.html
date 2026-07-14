@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Why and when to synthesize data, how AI does it, model distillation — and the quality risks that make 'we'll just generate the training data' a claim to probe, not accept.">
+<title>Unit 20 — Synthetic Data &amp; Distillation</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.depth{background:var(--depth); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* why cards */
+  .why{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:24px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .why .c{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; border-left:4px solid #5c8a5c}
+  .why .c h4{margin:0 0 4px; font-size:1rem}
+  .why .c p{margin:0; font-size:13.5px; color:#555}
+  @media (max-width:600px){.why{grid-template-columns:1fr}}
+
+  /* limitation cards */
+  .lim{border:1px solid var(--line); border-radius:12px; padding:15px 18px; margin:12px 0; background:var(--card);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; border-left:5px solid #b4552d}
+  .lim h4{margin:0 0 5px; font-size:1.06rem; color:#a23b3b}
+  .lim p{margin:0; font-size:14.5px; color:#555}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Depth Layer</p>
+  <h1><span class="num">Unit 20</span> — Synthetic Data &amp; Distillation</h1>
+  <p class="lead">Why and when to synthesize data, how AI does it, model distillation — and the quality risks that make "we'll just generate the training data" a claim to probe, not accept.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">data-cost</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill depth">DEPTH — when data acquisition is the bottleneck</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Evaluate "we'll just generate the training data" proposals with appropriate skepticism.</div></div>
+    <div class="row"><div class="lbl">Depends on</div><div class="val">Unit 11 (data curation). Error analysis in Unit 14 often surfaces a data bottleneck, though this unit doesn't require it.</div></div>
+  </div>
+
+  <h2>Why this unit is mostly about skepticism</h2>
+  <p>Unit 11 established that data is the usual blocker. The seductive escape hatch is "let's just generate it." Synthetic data is genuinely useful and increasingly common — but the phrase hides real risks that can quietly poison a model. This unit gives you both halves: when synthesis legitimately helps, and the four failure modes that should make you probe any "we'll synthesize it" proposal before it's funded.</p>
+
+  <h2>1. Why teams synthesize data (the legitimate reasons)</h2>
+  <p>Synthesis targets the same "golden trio" from Unit 11 — quantity, coverage, quality — plus two more:</p>
+  <div class="why">
+    <div class="c"><h4>Quantity</h4><p>Produce data at scale where real data is scarce or dangerous to collect (rare weather, deep sea, car-accident scenarios).</p></div>
+    <div class="c"><h4>Coverage</h4><p>Generate targeted cases: very long/short texts, adversarial examples, rare classes, toxic examples to train detectors.</p></div>
+    <div class="c"><h4>Quality</h4><p>Sometimes better than human — AI-generated preference labels are more <em>consistent</em> than humans whose ratings vary by mood.</p></div>
+    <div class="c"><h4>Privacy</h4><p>Often the only option where real data is legally off-limits — synthetic patient records or insurance claims with no real PII.</p></div>
+    <div class="c"><h4>Distillation</h4><p>Generate data from a big model to train a cheaper, faster small one (its own section below).</p></div>
+  </div>
+
+  <h2>2. How it's made (a quick map)</h2>
+  <p>You don't need the recipes, just the vocabulary so you know what a team means. Two traditional families predate AI, and one is new:</p>
+  <table class="tbl">
+    <tr><td>Rule-based / templates</td><td>Fill a template with a random generator (fake transactions, invoices, resumes); apply transforms (rotate/crop images; swap words for synonyms — also handy for de-biasing by flipping gendered terms); add <em>perturbation</em> (noise) for robustness.</td></tr>
+    <tr><td>Simulation</td><td>Run experiments virtually instead of dangerously — self-driving cars meeting a "horse" in a simulator, robot-arm movements, rare financial or climate scenarios.</td></tr>
+    <tr><td>AI-powered</td><td>Use a model to generate data: simulate API outcomes without calling them, simulate humans, <em>self-play</em> (a bot playing itself for the equivalent of ~180 years of games a day), or generate instruction data.</td></tr>
+  </table>
+  <p>Recall from Unit 14 the key discipline for AI-generated inputs: use <strong>structured dimensions</strong> (features × scenarios × personas), not "give me test queries," or you get generic mush.</p>
+
+  <h2>3. The four risks — the heart of the unit</h2>
+  <p>This is what to raise when someone proposes synthesizing training data. AI-generated data will keep growing in importance, but it likely can't fully replace human data, for four reasons:</p>
+
+  <div class="lim">
+    <h4>1 · Quality control — garbage in, garbage out</h4>
+    <p>Generated data can be low quality, and if you can't <em>verify</em> it, you can't trust it. The gate on synthetic data is having reliable ways to evaluate it — which loops straight back to your eval system (Units 09, 14, 15). No verification, no confidence.</p>
+  </div>
+  <div class="lim">
+    <h4>2 · Superficial imitation — and forced hallucination</h4>
+    <p>Training a small "student" on a big "teacher's" outputs often copies the teacher's <em>style</em> but not its factual accuracy or ability to generalize. Worse: if the teacher can solve hard math and you train the student on those solutions, you teach the student to <em>produce answers that look like solutions</em> even when it can't actually solve them — i.e. to hallucinate confidently. Real reasoning gains come from better base models, not imitation.</p>
+  </div>
+  <div class="lim">
+    <h4>3 · Model collapse — the recursion trap</h4>
+    <p>Recursively training on AI-generated data can cause irreversible degradation: models over-represent probable events and forget rare ones over generations (a cancer-detection model that increasingly "forgets" the rare positive case). Collapse is likely if the training set is <em>entirely</em> synthetic; mixing in real data helps — though there's no settled recipe for the right ratio. <strong>All-synthetic is the danger zone.</strong></p>
+  </div>
+  <div class="lim">
+    <h4>4 · Obscure data lineage — hidden legal &amp; eval risk</h4>
+    <p>Generating with model X hides where the data came from. If X was trained on copyrighted material, your model may inherit the violation. If X saw benchmark B, your strong score on B is <em>contaminated</em> and meaningless. Without clear lineage you can't fully trust performance or commercial safety.</p>
+  </div>
+
+  <div class="callout">
+    <span class="h">The skeptic's questions for any "we'll synthesize it" proposal</span>
+    <strong>Verification:</strong> how will we check the synthetic data's quality? <strong>Imitation:</strong> are we teaching real capability or just the <em>appearance</em> of it? <strong>Ratio:</strong> is this all-synthetic (collapse risk) or mixed with real data? <strong>Lineage &amp; license:</strong> what model generated it, was it trained on copyrighted or benchmark data, and does its license even <em>permit</em> using outputs to train our model?
+  </div>
+  <p>The balanced view: some teams <em>do</em> succeed with heavy synthetic data (one instruction-tuned model used ~98% synthetic data) — but typically for a single iteration and with <strong>verified</strong> synthetic data only. The pattern that works is "generate, then verify, then use only what passed," never "generate and trust."</p>
+
+  <h2>4. Model distillation</h2>
+  <p><span class="keyterm">Distillation</span> is a specific, valuable use of synthesis: train a small <em>student</em> to mimic a big <em>teacher</em>, so you get a cheaper, faster model with comparable performance. DistilBERT kept ~97% of BERT's capability at 40% smaller and 60% faster; Alpaca was a small model finetuned on a large model's outputs. It pairs naturally with lightweight adapters (LoRA) from Unit 19 to slash inference cost.</p>
+  <div class="callout">
+    <span class="h">Two things to know about distillation</span>
+    <strong>Licenses often forbid it:</strong> many models prohibit using their outputs to train other models — especially <em>competing</em> ones. Check before you build. <strong>Not all synthetic training is distillation:</strong> distillation means the teacher is the student's gold standard; but verified synthetic data can also train a student that ends up <em>larger and better</em> than its teacher. The deciding factor throughout: quality verification, not raw volume.
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Name the legitimate reasons to synthesize (quantity, coverage, quality, privacy, distillation) and the three technique families.</li>
+      <li>Raise the four risks — quality control, superficial imitation/forced hallucination, model collapse, obscure lineage — against a synthesis proposal.</li>
+      <li>Insist on verified synthetic data and a real-data mix rather than all-synthetic.</li>
+      <li>Explain distillation (student/teacher, cheaper model) and flag the license restriction on using model outputs.</li>
+    </ul>
+  </div>
+  <p>That closes the data-cost deep dives. The remaining DEPTH units turn to launch: monitoring and the feedback loop (Unit 21) and defensive prompting (Unit 22).</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 20 of 24 · Depth layer · Tag: <em>data-cost</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong><a href="unit-21-monitoring-and-feedback.html" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid rgba(180,85,45,.35)">Unit 21 — Monitoring, Observability &amp; the Feedback Loop</a></strong></div>
+  </div>
+
+</div>
+</body>
+</html>

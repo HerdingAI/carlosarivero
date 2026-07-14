@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Monitoring and observability for LLM systems, pipeline orchestration, and — the PM's part — user feedback: extracting conversational signals, feedback design, and its limits.">
+<title>Unit 21 — Monitoring, Observability &amp; the Feedback Loop</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.depth{background:var(--depth); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* DORA metrics */
+  .dora{display:flex; gap:12px; margin:22px 0; flex-wrap:wrap; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .dora .d{flex:1; min-width:150px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; border-top:4px solid #5c7a99}
+  .dora .d .ab{font-size:1.3rem; font-weight:800; color:#5c7a99}
+  .dora .d h4{margin:4px 0 3px; font-size:.98rem}
+  .dora .d p{margin:0; font-size:13px; color:#555}
+
+  /* signal chips */
+  .sig{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:20px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .sig h4{margin:0 0 10px; font-size:1.02rem}
+  .sig .chip{display:inline-block; background:var(--accent-soft); border-radius:8px; padding:6px 12px; margin:3px;
+    font-size:13.5px; color:#7a3d22}
+  .sig .chip b{color:#b4552d}
+
+  /* three stacked layers monitoring */
+  .obs{margin:22px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .obs .o{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:13px 16px; margin:8px 0; border-left-width:5px}
+  .obs .met{border-left-color:#5c8a5c} .obs .log{border-left-color:#c99a3b} .obs .trace{border-left-color:#5c7a99}
+  .obs .o h4{margin:0 0 2px; font-size:1rem}
+  .obs .o p{margin:0; font-size:13.5px; color:#555}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Depth Layer</p>
+  <h1><span class="num">Unit 21</span> — Monitoring, Observability &amp; the Feedback Loop</h1>
+  <p class="lead">Monitoring and observability for LLM systems, pipeline orchestration, and — the PM's part — user feedback: extracting conversational signals, feedback design, and its limits.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">production</span><span class="pill">evals</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill depth">DEPTH — at first production launch</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Design the post-launch feedback loop as part of the product spec, not an afterthought.</div></div>
+    <div class="row"><div class="lbl">Depends on</div><div class="val">Unit 10 (production architecture). This is the piece deliberately held back from Unit 10 — monitoring and the feedback loop.</div></div>
+  </div>
+
+  <h2>Why this is a spec item, not a launch-day scramble</h2>
+  <p>Unit 10 built the architecture but held two things for launch: how you'll <em>watch</em> the system in production, and how you'll <em>learn</em> from real users. Both should be designed in from the start. Non-determinism (Unit 02) means a system that passed evals can still fail live on the same input, and the conversational interface makes user feedback uniquely rich — and uniquely tricky to read. The takeaway to hold: <strong>the feedback loop is part of the product spec.</strong></p>
+
+  <h2>1. Monitoring &amp; observability</h2>
+  <p>The goal is the same as evaluation — mitigate risks (failures, attacks, drift), find opportunities. The distinction worth knowing: <span class="keyterm">monitoring</span> watches external outputs to notice something's wrong; <span class="keyterm">observability</span> instruments the system so you can figure out <em>what</em> went wrong from its logs and metrics <em>without shipping new code</em>. Three DevOps metrics grade how observable you are:</p>
+
+  <div class="dora">
+    <div class="d"><div class="ab">MTTD</div><h4>Mean time to detection</h4><p>How long until you notice something broke?</p></div>
+    <div class="d"><div class="ab">MTTR</div><h4>Mean time to response</h4><p>How long from noticing to resolved?</p></div>
+    <div class="d"><div class="ab">CFR</div><h4>Change failure rate</h4><p>% of deploys that fail and need a fix/rollback. Don't know yours? Redesign for observability.</p></div>
+  </div>
+
+  <div class="callout">
+    <span class="h">Design metrics around failures, not the other way round</span>
+    Metrics aren't the goal — catching problems is. So start from <em>what failure you want to catch</em>, then build the metric. Worried about hallucination? Track whether output can be inferred from context. Worried about cost? Track tokens per request and cache hit rate. Evaluation and monitoring must interlock: eval metrics should predict monitoring metrics, and issues found in production must flow back into the eval pipeline (Units 09, 14).
+  </div>
+
+  <p>What's worth tracking, at a glance: <strong>format</strong> failures (invalid JSON — easiest to catch), <strong>quality</strong> (factual consistency, conciseness via AI judges), <strong>safety</strong> (toxicity, PII, how often guardrails trigger or the system refuses), <strong>latency</strong> (TTFT/TPOT/total, per user), and <strong>cost</strong> (tokens, requests/sec vs. rate limits). Break every metric down by user, release, and prompt version, and combine <em>spot checks</em> (sample) with <em>exhaustive checks</em> (every request). The three observability layers:</p>
+
+  <div class="obs">
+    <div class="o met"><h4>Metrics</h4><p>Aggregated numbers — tell you <em>that</em> something's wrong, at a glance.</p></div>
+    <div class="o log"><h4>Logs</h4><p>Append-only record of events — tell you <em>what</em> happened. Rule of thumb: <strong>log everything</strong> (configs, sampling settings, prompt, query, output, tool calls) with tags/IDs, because you can't predict what you'll need.</p></div>
+    <div class="o trace"><h4>Traces</h4><p>Linked events forming one request's full path — let you pinpoint the <em>exact step</em> a query went wrong (bad retrieval? wrong prompt? bad generation?).</p></div>
+  </div>
+
+  <div class="callout">
+    <span class="h">Drift — the failure that creeps in silently</span>
+    Three things change under you: <strong>the system prompt</strong> (a teammate fixes a "typo," a template updates) — add a check that catches when your prompt changes; <strong>user behavior</strong> (users learn to prompt differently, shifting your metrics gradually); and — most insidious — <strong>the underlying model</strong> (an API's model gets updated without notice; observed drops of ~10% on a version bump). If you're on someone's API, assume the model can move beneath you and monitor for it.
+  </div>
+
+  <h2>2. Pipeline orchestration (briefly)</h2>
+  <p>An <span class="keyterm">orchestrator</span> wires the components from Unit 10 into an end-to-end flow — two steps: <em>components definition</em> (declare your models, data sources, tools) and <em>chaining</em> (specify the steps from query to response, e.g. process → retrieve → prompt → generate → evaluate → return-or-escalate). It passes data between steps and flags when the flow breaks.</p>
+  <div class="callout">
+    <span class="h">Don't reach for one on day one</span>
+    Tempting to start with an orchestration framework — but any external tool adds complexity and can <em>abstract away</em> exactly the details you need to debug. Start without one; adopt later, evaluating on integration/extensibility, support for complex pipelines (branching, parallelism, error handling), and ease/performance (avoid ones that make hidden API calls or add latency).
+  </div>
+
+  <h2>3. User feedback — the PM's real deliverable</h2>
+  <p>This is where you own the design. User feedback does double duty: it evaluates performance <em>and</em> it's <strong>proprietary data</strong> — the fuel for the data flywheel (Units 03, 11). A product that launches early and gathers feedback builds a moat rivals can't easily close. (And feedback is user data — respect privacy and be transparent about use.)</p>
+
+  <h3>Explicit vs. implicit</h3>
+  <table class="tbl">
+    <tr><td>Explicit</td><td>Directly requested: thumbs up/down, star ratings, "did we solve your problem?" Easy to interpret, but sparse (users rarely bother) and biased (unhappy users complain more).</td></tr>
+    <tr><td>Implicit</td><td>Inferred from actions. Abundant — "limited only by your imagination" — but noisy and ambiguous (sharing a chat can mean "this is great" <em>or</em> "look at this blunder"). Study your users to learn what each action means.</td></tr>
+  </table>
+
+  <h3>Conversational signals to mine</h3>
+  <p>The chat interface makes users give feedback the way they would to a person. Signals worth tracking:</p>
+  <div class="sig">
+    <h4>From the messages (natural language)</h4>
+    <span class="chip"><b>Early termination</b> — user stops the response / leaves</span>
+    <span class="chip"><b>Error correction</b> — "No…", "I meant…", rephrasing</span>
+    <span class="chip"><b>Complaints</b> — wrong, irrelevant, too long, lacks detail</span>
+    <span class="chip"><b>Sentiment</b> — "Ugh," rising frustration</span>
+    <span class="chip"><b>"Are you sure?"</b> — distrust or missing detail</span>
+    <span class="chip"><b>Refusal rate</b> — "As a language model, I can't…"</span>
+  </div>
+  <div class="sig">
+    <h4>From the actions</h4>
+    <span class="chip"><b>Regeneration</b> — unsatisfied (or just wants options)</span>
+    <span class="chip"><b>Delete / rename</b> convo — delete = bad; rename = good answer, bad title</span>
+    <span class="chip"><b>Conversation length</b> — good for companions, bad for support bots</span>
+    <span class="chip"><b>Dialogue diversity</b> — long + repetitive = stuck in a loop</span>
+  </div>
+  <div class="callout">
+    <span class="h">The hidden bonus: edits are preference data</span>
+    When a user edits the model's output — fixes generated code, rewrites a draft — that's a gold-standard <em>preference pair</em>: original = "losing," edited = "winning." The same is true for side-by-side "which is better?" comparisons. This is the raw material for preference finetuning (Unit 19), captured for free if you design for it.
+  </div>
+
+  <h3>Feedback design — when and how to collect</h3>
+  <table class="tbl">
+    <tr><th>When</th><th>What to offer</th></tr>
+    <tr><td>At the beginning</td><td>Calibrate to the user (a language app gauging level). Keep it optional unless calibration is essential (like Face ID); fall back to neutral and learn over time.</td></tr>
+    <tr><td>When something bad happens</td><td>Let users report and still finish the task — downvote, regenerate, edit the wrong output, or escalate to a human. Human-AI collaboration (e.g. image inpainting) both helps the user and yields high-quality feedback.</td></tr>
+    <tr><td>When the model is unsure</td><td>Ask — show two options side by side and let the user pick (great comparative signal), if it doesn't add latency.</td></tr>
+  </table>
+  <div class="callout">
+    <span class="h">How: make it effortless and nonintrusive</span>
+    Feedback must fit the workflow, be easy to give, and easy to ignore. The exemplars bake it into the action itself: Midjourney's upscale/vary/regenerate buttons each carry a different implicit signal; Copilot's Tab-to-accept vs. keep-typing is feedback either way. Two cautions: Apple's guideline warns against soliciting <em>positive</em> feedback (it implies good results are the exception) — though some teams still want it to find beloved features; and gate frequency (ask 1% of users) to avoid clutter, accepting some bias.
+  </div>
+
+  <div class="callout">
+    <span class="h">The limitation to plan around: integration beats standalone</span>
+    Standalone tools (ChatGPT, Claude) struggle to collect high-quality feedback because they're outside the user's workflow — ChatGPT can't tell if the email it wrote was ever sent. Integrated products (Copilot, Gmail Smart Compose) see whether the output was used or edited. And raw feedback needs <em>context</em> (the surrounding turns) to be actionable — thumbs-down alone tells you the rate, not the reason. Design collection so you capture the context, not just the verdict.
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Grade observability with MTTD/MTTR/CFR and design metrics backward from the failures you want to catch.</li>
+      <li>Use metrics → logs → traces to detect, then pinpoint, a production failure — and watch for prompt/behavior/model drift.</li>
+      <li>Resist reaching for an orchestrator too early, and know what to evaluate when you do.</li>
+      <li>Design a feedback system: explicit vs. implicit, the conversational signals to mine, and when/how to collect without intruding.</li>
+      <li>Capture edits and comparisons as preference data — and plan around the standalone-vs-integrated limitation.</li>
+    </ul>
+  </div>
+  <p>That closes the production thread. One DEPTH unit remains before the optional background: defensive prompting — the security lens for any launch exposed to untrusted input.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 21 of 24 · Depth layer · Tags: <em>production · evals</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong><a href="unit-22-defensive-prompting.html" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid rgba(180,85,45,.35)">Unit 22 — Defensive Prompting: Injection, Jailbreaks, Extraction</a></strong></div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Term-based vs. embedding retrieval, chunking, reranking, query rewriting, and the trade-offs — enough to follow a retrieval-quality debate and know which lever the team is pulling, at what cost.">
+<title>Unit 17 — RAG Internals: Retrieval Quality</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --arch:#5c7a99; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.depth{background:var(--depth); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:24%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* two retrievers */
+  .two{display:flex; gap:14px; margin:24px 0; flex-wrap:wrap; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .two .c{flex:1; min-width:250px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; border-top-width:4px}
+  .two .term{border-top-color:#5c8a5c} .two .emb{border-top-color:#5c7a99}
+  .two .c h4{margin:0 0 3px; font-size:1.06rem}
+  .two .c .sub{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px}
+  .two .term .sub{color:#5c8a5c} .two .emb .sub{color:#5c7a99}
+  .two .c p{margin:0 0 8px; font-size:14px; color:#555}
+  .two .c .tag{font-size:12.5px; color:#777}
+  .two .c .tag b{color:#444}
+
+  /* lever cards */
+  .lever{border:1px solid var(--line); border-radius:12px; padding:15px 18px; margin:12px 0; background:var(--card);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; border-left:4px solid var(--arch)}
+  .lever h4{margin:0 0 4px; font-size:1.06rem}
+  .lever p{margin:0 0 8px; font-size:14.5px; color:#555}
+  .lever .cost{font-size:13px; color:#7a3d22; background:var(--accent-soft); border-radius:7px; padding:7px 11px}
+  .lever .cost b{color:#b4552d}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Depth Layer &nbsp;·&nbsp; Architecture Thread</p>
+  <h1><span class="num">Unit 17</span> — RAG Internals: Retrieval Quality</h1>
+  <p class="lead">Term-based vs. embedding retrieval, chunking, reranking, query rewriting, and the trade-offs — enough to follow a retrieval-quality debate and know which lever the team is pulling, at what cost.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">architecture</span><span class="pill">data-cost</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill depth">DEPTH — when a RAG system underperforms and the team debates chunking / embeddings / rerankers</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Follow a retrieval-quality debate and understand which lever the team proposes to pull — and at what cost.</div></div>
+    <div class="row"><div class="lbl">Depends on</div><div class="val">Unit 05 (RAG as retriever + generator). Pull in when a RAG system underperforms.</div></div>
+  </div>
+
+  <h2>Why open up the retriever</h2>
+  <p>Unit 05 said a RAG system is a retriever plus a generator, and that its quality rides on the retriever. This unit opens the retriever box — because when a RAG feature gives wrong or thin answers, the fix is almost always in <em>retrieval</em>, and the team will debate chunking, embeddings, and rerankers. You won't tune these, but you should follow the argument and know what each lever buys and costs.</p>
+
+  <div class="callout">
+    <span class="h">The reframe: a wrong RAG answer is usually a retrieval failure</span>
+    If the right document never reaches the model, no prompt or model swap saves the answer. So "our RAG is bad" should trigger "show me the retrieval quality" before anything else. This unit is the vocabulary for that conversation.
+  </div>
+
+  <h2>1. The two ways to find documents</h2>
+  <p>All retrieval ranks documents by relevance to a query. Two families do the ranking differently:</p>
+
+  <div class="two">
+    <div class="c term">
+      <div class="sub">Lexical / keyword</div>
+      <h4>Term-based retrieval</h4>
+      <p>Matches on <em>words</em>. Ranks by how often a query's important terms appear (term frequency), weighting rarer terms higher (inverse document frequency) — the TF-IDF idea, industrialized as BM25 / Elasticsearch.</p>
+      <p class="tag"><b>Strength:</b> fast, cheap, strong out of the box. <b>Weakness:</b> literal — misses meaning, and hard to improve.</p>
+    </div>
+    <div class="c emb">
+      <div class="sub">Semantic / meaning</div>
+      <h4>Embedding-based retrieval</h4>
+      <p>Converts chunks and the query into <em>embeddings</em> (vectors capturing meaning), stores them in a <strong>vector database</strong>, and fetches the k nearest. Ranks by meaning, not words.</p>
+      <p class="tag"><b>Strength:</b> handles natural queries, improvable via finetuning. <b>Weakness:</b> slower, costlier, can obscure exact keywords (error codes, product names).</p>
+    </div>
+  </div>
+
+  <table class="tbl">
+    <tr><th></th><th>Term-based</th><th>Embedding-based</th></tr>
+    <tr><td>Speed</td><td>Much faster (index &amp; query)</td><td>Query embedding + vector search can be slow</td></tr>
+    <tr><td>Quality</td><td>Strong out of the box, hard to improve; can grab wrong sense of a word (e.g. "transformer" the device vs. the model)</td><td>Can surpass term-based with finetuning; understands intent</td></tr>
+    <tr><td>Cost</td><td>Cheap</td><td>Embedding generation, vector storage &amp; search can be expensive — sometimes a fifth to half of model-API spend</td></tr>
+  </table>
+
+  <div class="callout">
+    <span class="h">Why production usually runs both: hybrid search</span>
+    Because the two fail in opposite ways, most real systems combine them (<span class="keyterm">hybrid search</span>). Common pattern: a cheap term-based pass fetches candidates, then an expensive semantic pass <em>reranks</em> to find the truly relevant ones — e.g. grab every doc containing "transformer," then use vector search to keep only the neural-network ones. (Parallel ensembles merged by rank fusion are the other pattern.) When a team says "we added hybrid search," this is what they mean.
+  </div>
+  <p>The deeper machinery — approximate-nearest-neighbor algorithms (HNSW, IVF, LSH…) that make vector search fast — is real but the engineers' concern. The trade you should know: a richer index gives more accurate, faster queries but costs more time and memory to build (which bites when data changes often).</p>
+
+  <h2>2. The optimization levers (and what each costs)</h2>
+  <p>When retrieval underperforms, these are the four dials the team reaches for. Each improves relevance but spends something.</p>
+
+  <div class="lever">
+    <h4>Chunking strategy</h4>
+    <p>How documents are split for indexing — fixed size (characters/words/sentences/paragraphs), recursive splitting, or format-aware (code, Q&amp;A pairs). Overlap between chunks avoids cutting key context mid-thought ("I left my wife / a note").</p>
+    <p class="cost"><b>The trade:</b> smaller chunks fit more diverse info in context but risk losing information and double the embeddings to store/search; larger chunks preserve context but retrieve less precisely. <b>No universal best — it's tuned by experiment.</b></p>
+  </div>
+
+  <div class="lever">
+    <h4>Reranking</h4>
+    <p>Re-order the retriever's candidates with a more precise (pricier) scorer, or by recency for time-sensitive apps (news, email, markets). Especially useful to shrink the set to fit the model's context.</p>
+    <p class="cost"><b>The trade:</b> better top results for extra compute per query. Order matters less than in search — as long as a doc is included, its exact rank is secondary (though beginning/end of context are attended best).</p>
+  </div>
+
+  <div class="lever">
+    <h4>Query rewriting</h4>
+    <p>Rewrite an ambiguous query to stand on its own before retrieval. "How about Emily Doe?" following a question about John Doe must become "When did Emily Doe last buy from us?" — often done with another model.</p>
+    <p class="cost"><b>The trade:</b> big relevance win on multi-turn chat, but adds a model call and can get hairy with identity resolution ("how about his wife?" needs a lookup — and must admit when it can't resolve rather than hallucinate a name).</p>
+  </div>
+
+  <div class="lever">
+    <h4>Contextual retrieval</h4>
+    <p>Augment each chunk to make it findable: metadata (tags, keywords, extracted entities like an error code), the questions it answers ("how to reset password?" → "I can't log in"), or a short generated blurb situating the chunk within its source document.</p>
+    <p class="cost"><b>The trade:</b> notably better recall, especially for chunks that lost context when split — at the cost of extra indexing work (and model calls if you generate the context).</p>
+  </div>
+
+  <h2>3. How to tell if retrieval is actually the problem</h2>
+  <p>The whole debate is unwinnable without measurement. Retrieval has its own metrics, separate from the final answer:</p>
+  <table class="tbl">
+    <tr><td>Context precision</td><td>Of the documents retrieved, what fraction are relevant? (Cheap to compute — just judge the retrieved set against the query; an AI judge can do it.)</td></tr>
+    <tr><td>Context recall</td><td>Of all relevant documents, what fraction did you retrieve? (Harder — needs every doc in the corpus labeled for relevance to the query.)</td></tr>
+    <tr><td>Ranking metrics</td><td>NDCG, MAP, MRR — if you care whether the <em>most</em> relevant docs rank first.</td></tr>
+  </table>
+  <div class="callout">
+    <span class="h">Evaluate the RAG system in three places</span>
+    Retrieval quality (the metrics above), the embeddings themselves (do more-similar docs sit closer?), and the end-to-end answer (does the retrieved context actually produce a good response?). A retriever is only "good" if it helps the whole system answer well — so component metrics and end-to-end evals both matter (Units 09, 15).
+  </div>
+
+  <h2>4. RAG beyond text</h2>
+  <p>External knowledge isn't only documents. Two extensions come up:</p>
+  <table class="tbl">
+    <tr><td>Multimodal RAG</td><td>Retrieve images/video/audio alongside text — by their metadata (captions, titles) or, for content-based matching, via a multimodal embedding model that puts text and images in the same vector space.</td></tr>
+    <tr><td>Tabular RAG (text-to-SQL)</td><td>Many questions need a database, not a document. The flow differs entirely: translate the natural-language question into a SQL query, run it, and feed the result back. "How many Fruity Fedoras sold last week?" becomes a <code>SELECT SUM…</code>, not a similarity search.</td></tr>
+  </table>
+  <p>Worth recognizing because "add RAG" can quietly mean "build a text-to-SQL agent," which is a very different project with different failure modes.</p>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Distinguish term-based (fast, literal, cheap) from embedding-based (semantic, improvable, pricey) retrieval — and why production runs hybrid.</li>
+      <li>Name the four retrieval levers (chunking, reranking, query rewriting, contextual retrieval) and the cost each one spends.</li>
+      <li>Ask for context precision/recall to locate whether the failure is in retrieval before debating models or prompts.</li>
+      <li>Recognize multimodal and tabular (text-to-SQL) RAG as distinct builds hiding behind "just add RAG."</li>
+    </ul>
+  </div>
+  <p>That covers retrieval depth. The other architecture-thread deep dives are agents (Unit 18) and finetuning (Unit 19), pulled in when those projects are on the table.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 17 of 24 · Depth layer · Tags: <em>architecture · data-cost</em> · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong><a href="unit-18-agent-internals.html" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid rgba(180,85,45,.35)">Unit 18 — Agent Internals: Tools, Planning, Failure Modes, Memory</a></strong></div>
+  </div>
+
+</div>
+</body>
+</html>

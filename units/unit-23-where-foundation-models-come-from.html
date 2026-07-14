@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Training-data realities and pre-training vs. post-training at a conceptual level — enough to explain to executives why models behave as they do, and why 'just train it on our data' isn't one sentence.">
+<title>Unit 23 — Where Foundation Models Come From</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --line:#e5e2dc; --bg:#faf9f6;
+    --card:#ffffff; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f; --depth:#8a5a2b; --tag:#eceae4; --code:#f3f1ec;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.62; font-size:18px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .breadcrumb{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; color:var(--muted); margin:0 0 28px;
+  }
+  .breadcrumb a{color:var(--muted); border-bottom:none}
+  .breadcrumb a:hover{color:var(--accent)}
+  .kicker{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:0 0 10px;
+  }
+  h1{font-size:2.15rem; line-height:1.15; margin:0 0 22px; font-weight:700; letter-spacing:-.01em}
+  h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:1.02rem; letter-spacing:.02em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:52px 0 6px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h3{font-size:1.28rem; margin:34px 0 6px; font-weight:700; letter-spacing:-.01em}
+  p{margin:14px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  strong{font-weight:700}
+  em{font-style:italic}
+  .lead{font-size:1.16rem; color:#333; margin-top:6px}
+
+  .meta{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin:26px 0 8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  .meta .row{display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .meta .row:last-child{border-bottom:0}
+  .meta .lbl{flex:0 0 96px; color:var(--muted); font-weight:600; font-size:12.5px;
+    letter-spacing:.08em; text-transform:uppercase; padding-top:2px}
+  .meta .val{flex:1}
+  .pill{display:inline-block; background:var(--tag); color:#444; border-radius:999px;
+    padding:2px 11px; font-size:12.5px; font-weight:600; margin:2px 6px 2px 0}
+  .pill.depth{background:var(--depth); color:#fff}
+
+  .callout{
+    background:var(--accent-soft); border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:16px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px; line-height:1.55;
+  }
+  .callout .h{font-weight:700; display:block; margin-bottom:4px; color:var(--accent);
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+  .keyterm{color:var(--accent); font-weight:700; font-style:normal}
+
+  .tbl{width:100%; border-collapse:collapse; margin:22px 0; font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tbl th,.tbl td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  .tbl th{font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td:first-child{font-weight:600; width:26%}
+  .tbl code{background:var(--code); padding:1px 6px; border-radius:5px; font-size:13px}
+
+  .qbox{border:1px dashed var(--accent); border-radius:12px; padding:18px 20px; margin:26px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px}
+  .qbox strong{color:var(--accent)}
+  .qbox ul{margin:10px 0 0; padding-left:20px}
+  .qbox li{margin:7px 0}
+
+  /* two-stage pipeline */
+  .pipe{margin:24px 0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .stage{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:15px 18px 15px 54px;
+    margin:10px 0; position:relative; border-left-width:5px}
+  .stage.pre{border-left-color:#8a5a2b} .stage.sft{border-left-color:#c99a3b} .stage.pref{border-left-color:#5c8a5c}
+  .stage .n{position:absolute; left:13px; top:15px; color:#fff; width:30px; height:30px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px}
+  .stage.pre .n{background:#8a5a2b} .stage.sft .n{background:#c99a3b} .stage.pref .n{background:#5c8a5c}
+  .stage h4{margin:0 0 3px; font-size:1.08rem}
+  .stage .tagn{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#888; margin-left:8px}
+  .stage p{margin:5px 0 0; font-size:14px; color:#555}
+
+  /* lang bar */
+  .langbar{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:20px 0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .langbar .r{display:flex; align-items:center; gap:10px; margin:5px 0; font-size:13px}
+  .langbar .lb{flex:0 0 90px; color:#555; font-weight:600}
+  .langbar .track{flex:1; height:16px; background:#eee; border-radius:4px; overflow:hidden}
+  .langbar .f{height:100%; background:#8a5a2b}
+  .langbar .v{flex:0 0 55px; text-align:right; color:#777}
+
+  hr.soft{border:0; border-top:1px solid var(--line); margin:44px 0}
+  .footer{margin-top:56px; padding-top:20px; border-top:2px solid var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer .next{color:var(--ink)}
+  .num{color:var(--accent)}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:1.8rem} .wrap{padding:36px 18px 72px}
+    .meta .row{flex-direction:column; gap:2px} .meta .lbl{flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="breadcrumb"><a href="../index.html">Signal / Noise</a> · <a href="../course.html">How to make AI products</a></p>
+
+  <p class="kicker">Applied GenAI Curriculum for AI PMs &nbsp;·&nbsp; Depth Layer &nbsp;·&nbsp; Optional Background</p>
+  <h1><span class="num">Unit 23</span> — Where Foundation Models Come From</h1>
+  <p class="lead">Training-data realities and pre-training vs. post-training at a conceptual level — enough to explain to executives why models behave as they do, and why "just train it on our data" isn't one sentence.</p>
+
+  <div class="meta">
+    <div class="row"><div class="lbl">Tags</div><div class="val"><span class="pill">vocab</span></div></div>
+    <div class="row"><div class="lbl">Layer</div><div class="val"><span class="pill depth">DEPTH — pure curiosity / stakeholder-education tier</span></div></div>
+    <div class="row"><div class="lbl">Objective</div><div class="val">Explain to executives why models behave as they do — and why "just train it on our data" isn't a single sentence.</div></div>
+    <div class="row"><div class="lbl">Depends on</div><div class="val">Unit 01 (the vocabulary of foundation models and training).</div></div>
+  </div>
+
+  <h2>Why a PM benefits from this background</h2>
+  <p>This unit is optional — you can operate without it. But two conversations get much easier once you have it: explaining to a stakeholder <em>why</em> a model behaves the way it does (why it's confidently wrong, worse in some languages, or oddly moralistic), and gently correcting the executive who says "let's just train it on our data" as if that were a Tuesday task. Both trace back to <strong>where the model came from</strong>: the data it ate, and the two-stage process that shaped it.</p>
+
+  <h2>1. The data reality: models are what they ate</h2>
+  <p>Most foundation models are trained on <span class="keyterm">Common Crawl</span> — a massive scrape of the internet — or cleaned subsets of it. That means their raw diet includes "clickbait, misinformation, propaganda, conspiracy theories" and every sketchy corner of the web. Teams filter with heuristics (GPT-2 used only Reddit links with 3+ upvotes — hardly a bar for good taste), but the core truth holds: <strong>a model inherits the biases, gaps, and errors of its training data.</strong></p>
+  <div class="callout">
+    <span class="h">The "use what we have, not what we want" problem</span>
+    Models are trained on the data that <em>exists and is cheap to get</em>, not the data you'd ideally want. That's why a general model can be great at common web tasks and poor at yours. And more data isn't automatically better — a small amount of high-quality data can beat a large amount of low-quality data (a 1.3B model on curated code beat much larger models). This is the executive-friendly version of Unit 11.
+  </div>
+
+  <h3>Why models are worse in other languages</h3>
+  <p>English dominates the internet — nearly <strong>46%</strong> of Common Crawl, eight times the next language. "Low-resource" languages are badly under-represented, and it shows:</p>
+  <div class="langbar">
+    <div class="r"><span class="lb">English</span><div class="track"><div class="f" style="width:100%"></div></div><span class="v">45.9%</span></div>
+    <div class="r"><span class="lb">Russian</span><div class="track"><div class="f" style="width:13%"></div></div><span class="v">6.0%</span></div>
+    <div class="r"><span class="lb">Chinese</span><div class="track"><div class="f" style="width:10.6%"></div></div><span class="v">4.9%</span></div>
+    <div class="r"><span class="lb">Bengali</span><div class="track"><div class="f" style="width:0.2%"></div></div><span class="v">0.09%</span></div>
+    <div class="r"><span class="lb">Punjabi</span><div class="track"><div class="f" style="width:0.05%"></div></div><span class="v">0.006%</span></div>
+  </div>
+  <p>The consequences compound: models perform worse (GPT-4 solved English math problems 3× more often than Armenian/Farsi), "just translate to English and back" loses information (Vietnamese pronouns encoding social relationships collapse into "I/you"), and non-English text is <em>more expensive and slower</em> — the same meaning takes ~10× more tokens in Burmese than English, so it costs ~10× more on a per-token API. Useful to know before promising global parity.</p>
+
+  <h3>Why "train it on our domain" is a real project</h3>
+  <p>General models are broad because their training data was broad — but they're unlikely to do well on tasks they never saw. Genuinely specialized domains (drug discovery on protein/DNA data, cancer screening on X-rays/fMRI) need <em>curated, hard-to-acquire</em> datasets that aren't on the public internet at all. That's why domain-specific models like AlphaFold (trained on ~100,000 protein structures) or Med-PaLM exist as distinct efforts. "Train it on our data" means acquiring, cleaning, and curating that data first — the expensive part.</p>
+
+  <h2>2. The two-stage process: pre-training then post-training</h2>
+  <p>A raw pre-trained model has two problems: it only knows how to <em>complete text</em>, not converse, and — fed the raw internet — its outputs "can be racist, sexist, rude, or just wrong." Post-training fixes both, in two steps. Read pre-training as <em>reading to acquire knowledge</em>, post-training as <em>learning how to use it</em>.</p>
+
+  <div class="pipe">
+    <div class="stage pre"><span class="n">1</span><h4>Pre-training<span class="tagn">~98% of the compute</span></h4><p>Self-supervised learning on the raw internet. Produces a model that's knowledgeable but untamed — great at predicting the next token, with no sense of conversation or appropriateness.</p></div>
+    <div class="stage sft"><span class="n">2</span><h4>Supervised finetuning (SFT)<span class="tagn">teach it to converse</span></h4><p>Finetune on <em>demonstration data</em> — high-quality (prompt, response) pairs written by skilled humans — so the model learns to <em>answer</em> "how to make pizza" rather than continue the sentence. This is "behavior cloning": show good behavior, the model copies it.</p></div>
+    <div class="stage pref"><span class="n">3</span><h4>Preference finetuning<span class="tagn">teach it what to say</span></h4><p>Align outputs with human preference — via RLHF (train a reward model to score responses, then optimize for high scores), DPO, or RLAIF. SFT teaches it to <em>have</em> a conversation; this teaches it what conversations it <em>should</em> have.</p></div>
+  </div>
+
+  <div class="callout">
+    <span class="h">The metaphor that lands with executives</span>
+    Picture the "Shoggoth with a smiley face." Pre-training creates an <strong>untamed monster</strong> from indiscriminate internet data. SFT makes it <strong>socially acceptable</strong> by training on higher-quality examples. Preference finetuning <strong>paints on the friendly face</strong> so it's customer-appropriate. The polished assistant you talk to is a thin, deliberate layer over something wild — which is why safety and alignment take real work, and why post-training "unlocks" capability the base model already had rather than adding new knowledge.
+  </div>
+
+  <h3>Why alignment is genuinely hard (not just careless)</h3>
+  <p>Demonstration data teaches the model to converse but not <em>what</em> to say on contested questions — abortion, gun control, immigration. The goal of preference finetuning is to make models "behave according to human preference," which quietly assumes a <em>universal</em> human preference exists and can be embedded in a model. It can't, fully. Respond to a controversial issue and you upset some users; over-censor and the model gets boring and drives users away. This is why models feel cautious or inconsistent on hot topics — it's an unsolved balancing act, not an oversight.</p>
+
+  <div class="callout">
+    <span class="h">Two facts for the "just train it on our data" conversation</span>
+    <strong>(1) It's expensive human work.</strong> Demonstration data needs skilled labelers — ~90% of InstructGPT's labelers had college degrees; one (prompt, response) pair can take 30 minutes; ~13,000 pairs ran ~$130,000, before design and QA. <strong>(2) Good data is running out.</strong> Public data is being fenced off (data restrictions rendered ~45% of one popular corpus off-limits), making <em>proprietary</em> data a real competitive advantage — which loops straight back to your data flywheel (Units 03, 11, 21).
+  </div>
+
+  <h2>What "good" looks like after this unit</h2>
+  <div class="qbox">
+    <strong>You can now:</strong>
+    <ul>
+      <li>Explain that a model inherits its training data's biases and gaps — and why "use what we have" leaves it strong on common tasks, weak on yours.</li>
+      <li>Account for worse, slower, costlier behavior in low-resource languages from internet under-representation.</li>
+      <li>Describe the pre-training → SFT → preference-finetuning pipeline in plain terms (and the Shoggoth metaphor) for a non-technical audience.</li>
+      <li>Explain why alignment is hard and why "just train it on our data" is a real, expensive project — not a sentence.</li>
+    </ul>
+  </div>
+  <p>One optional-background unit remains: foundation-model evaluation concepts (Unit 24) — for parsing vendor benchmark claims when eval talk with researchers goes over your head.</p>
+
+  <hr class="soft">
+  <div class="footer">
+    <div>Unit 23 of 24 · Depth layer · Tag: <em>vocab</em> · Optional background · <a href="../course.html">Back to syllabus</a></div>
+    <div class="next">Next → <strong><a href="unit-24-foundation-model-evaluation-concepts.html" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid rgba(180,85,45,.35)">Unit 24 — Foundation-Model Evaluation Concepts (Optional Background)</a></strong></div>
+  </div>
+
+</div>
+</body>
+</html>
