@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Autonomy is not an ambition decision. It is a cost decision, and the costs compound per step.">
+<title>Workflow or agent? Do the arithmetic first — Signal / Noise</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --faint:#9a968e;
+    --bg:#faf9f6; --rule:#e5e2dc; --accent:#b4552d; --accent-soft:#f5ede6;
+    --core:#2f6f4f;
+    --maxw:700px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:18px; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+  .masthead,.meta,.callout-label,.tag,footer,.kicker,.metarow,h2{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  .masthead{
+    display:flex; justify-content:space-between; align-items:center; gap:16px;
+    border-bottom:1px solid var(--rule); padding-bottom:12px;
+  }
+  .masthead a.brand{font-size:16px; font-weight:700; color:var(--ink); text-decoration:none; border-bottom:0}
+  .masthead .icons{display:flex; gap:14px; align-items:center}
+  .masthead .icons a{color:#5c5c5c; display:flex; border-bottom:0}
+  .masthead .icons a:hover{color:var(--accent)}
+  article{padding:0 0 40px}
+  .kicker{
+    margin:44px 0 10px; font-size:13px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--accent); font-weight:700;
+  }
+  h1{
+    font-size:34px; line-height:1.15; letter-spacing:-.01em;
+    margin:0; font-weight:700;
+  }
+  .standfirst{font-size:17.5px; line-height:1.6; color:#333; margin:20px 0 0}
+  .metarow{
+    display:flex; flex-wrap:wrap; gap:8px 18px; padding:14px 0 0; margin:20px 0 0;
+    border-top:1px solid var(--rule);
+    font-size:12.5px; color:var(--faint); letter-spacing:.02em;
+  }
+  .metarow b{color:var(--muted); font-weight:600}
+  h2{
+    font-size:12.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin:44px 0 14px;
+    padding-bottom:8px; border-bottom:1px solid var(--rule);
+  }
+  p{margin:0 0 20px}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(180,85,45,.35)}
+  a:hover{border-bottom-color:var(--accent)}
+  em{font-style:italic}
+  strong{font-weight:700}
+  .callout{
+    margin:28px 0; padding:18px 22px; background:var(--accent-soft);
+    border-left:4px solid var(--accent); border-radius:0 10px 10px 0;
+  }
+  .callout-label{
+    display:block; font-size:13px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:6px; font-weight:700;
+  }
+  .callout p{margin:0; font-size:16px; color:var(--ink); line-height:1.55}
+  hr{border:0; border-top:1px solid var(--rule); margin:44px 0}
+  footer{margin-top:16px; padding-top:18px; border-top:2px solid var(--ink);
+    font-size:13px; color:var(--muted)}
+  footer a{color:var(--muted); text-decoration:none; border:0; font-weight:600}
+  footer a:hover{color:var(--accent)}
+  .footer-links{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:baseline}
+  @media (max-width:600px){
+    body{font-size:17px} h1{font-size:28px} .standfirst{font-size:16.5px} .wrap{padding:36px 18px 72px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="site">
+    <div class="masthead">
+      <a class="brand" href="index.html">Signal <span style="color:#b4552d">/</span> Noise</a>
+      <div class="icons">
+        <a href="https://www.linkedin.com/in/carlosarivero/" title="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z"></path></svg></a>
+        <a href="https://github.com/HerdingAI" title="GitHub"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.24c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.57 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.25 10.25 0 0 0 22 12.24C22 6.58 17.52 2 12 2z"></path></svg></a>
+      </div>
+    </div>
+  </header>
+
+  <article>
+    <div class="kicker">Essay · Product in the time of AI</div>
+    <h1>Workflow or agent? Do the arithmetic first</h1>
+    <p class="standfirst">Autonomy is not an ambition decision. It is a cost decision, and the costs compound per step.</p>
+    <div class="metarow">
+      <span><b>Theme</b> &nbsp;architecture judgment · cost &amp; latency</span>
+      <span><b>For</b> &nbsp;PMs choosing how much autonomy to buy</span>
+    </div>
+
+    <p>There is a conversation happening in every enterprise right now, and it usually starts with the word "agentic" and ends without anyone having done any arithmetic. The instinct is understandable — agents are the interesting thing, and nobody gets excited proposing a pipeline. But the choice between a workflow and an agent is not a statement about how advanced your team is. It is a purchasing decision about how much autonomy the task actually needs, paid for in three currencies: cost, latency, and compounding failure.</p>
+
+    <p>The definitions matter, so plainly: a <strong>workflow</strong> is a system where you decided the steps and the model executes inside them. An <strong>agent</strong> is a system where the model decides the steps — which tool to call, what to do next, when it's done. Everything in between — a workflow with one open-ended step, an agent on rails — is just a point on that line. The question is never "should we be agentic?" The question is: <em>where on this line does the task stop paying for autonomy?</em></p>
+
+    <h2>The arithmetic</h2>
+
+    <p>Three calculations, none requiring more than a napkin.</p>
+
+    <p><strong>Failure compounds per decision.</strong> A model that is right 95% of the time on a single step is a different animal chained across eight self-directed steps: 0.95⁸ ≈ 66%. One error in three runs, and — worse — the failures are <em>path</em> failures, different every time, resistant to debugging. A workflow spends its error budget once per constrained step, and you know which step broke. An agent spends it on every decision, including decisions you didn't know it would make. This single line of math kills most agent proposals honestly, before a demo ever seduces anyone.</p>
+
+    <p><strong>Latency and cost multiply per step too.</strong> Every reasoning hop is another model call. A task a workflow finishes in one pass and two seconds, an agent may finish in nine calls and forty seconds — at nine times the token bill, before retries. For a task run ten times a day, nobody cares. For a task run fifty thousand times a day, the architecture <em>is</em> the unit-economics decision.</p>
+
+    <p><strong>Variance is what autonomy is for.</strong> So when does the agent win? When the input space is too irregular to enumerate: the long tail of formats, the branching investigation, the task where writing the workflow means writing four hundred branches you'll never maintain. Autonomy is a payment you make to handle variance you cannot specify. If a human can write the steps down, the steps are cheaper — every time.</p>
+
+    <div class="callout">
+      <span class="callout-label">The tell</span>
+      <p>If the proposal says "agentic" before it says what the task is, the architecture was chosen for the roadmap slide, not the task. Ask for the input distribution. If nobody can describe how varied the inputs actually are, nobody has earned an opinion on autonomy yet.</p>
+    </div>
+
+    <h2>How I actually run the decision</h2>
+
+    <p>Build the workflow version first, cheaply — often it's a day of work, and it becomes the baseline. Then build the smallest agentic version of the same task and run both against the same eval set. Now the argument is over, because there is a table: quality delta, cost per task, p95 latency, failure rate, and — the row people forget — <em>reviewability</em>: when it's wrong, can a person see why?</p>
+
+    <p>Most tasks lose the autonomy they were about to be given. The workflow matches the agent's quality at a fraction of the cost, and the roadmap quietly improves. And when the agent <em>does</em> win — when the variance is real and the table shows it — you ship it with confidence instead of hope, because you know exactly what the autonomy is buying and what it costs.</p>
+
+    <p>The pattern underneath: start with the least autonomy that solves the task, and promote a system to more autonomy only when it has earned trust at the current level — the same way you'd promote a person. Systems that assist ship first; systems that act alone ship after the evidence.</p>
+
+    <hr>
+    <p style="font-size:16px;color:var(--muted)">If you take one thing: a workflow's failures add; an agent's failures multiply. Buy autonomy only where variance makes the multiplication worth it.</p>
+  </article>
+
+  <footer>
+    <div class="footer-links">
+      <a href="thoughts.html">← All thoughts</a>
+      <a href="https://www.linkedin.com/in/carlosarivero/">Disagree? LinkedIn →</a>
+    </div>
+  </footer>
+</div>
+</body>
+</html>
