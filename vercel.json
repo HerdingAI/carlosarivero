@@ -1,7 +1,5 @@
 {
   "redirects": [
-    { "source": "/the-model-is-the-easy-part", "destination": "/thoughts.html", "permanent": true },
-    { "source": "/the-model-is-the-easy-part.html", "destination": "/thoughts.html", "permanent": true },
     { "source": "/adoption-is-a-product-metric", "destination": "/if-they-dont-use-it-it-doesnt-exist.html", "permanent": true },
     { "source": "/adoption-is-a-product-metric.html", "destination": "/if-they-dont-use-it-it-doesnt-exist.html", "permanent": true }
   ]
