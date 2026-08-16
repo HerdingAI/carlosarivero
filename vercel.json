@@ -1,6 +1,10 @@
 {
   "redirects": [
     { "source": "/adoption-is-a-product-metric", "destination": "/if-they-dont-use-it-it-doesnt-exist.html", "permanent": true },
-    { "source": "/adoption-is-a-product-metric.html", "destination": "/if-they-dont-use-it-it-doesnt-exist.html", "permanent": true }
+    { "source": "/adoption-is-a-product-metric.html", "destination": "/if-they-dont-use-it-it-doesnt-exist.html", "permanent": true },
+    { "source": "/regulated", "destination": "/thoughts.html", "permanent": true },
+    { "source": "/regulated.html", "destination": "/thoughts.html", "permanent": true },
+    { "source": "/what-regulators-actually-read", "destination": "/thoughts.html", "permanent": true },
+    { "source": "/what-regulators-actually-read.html", "destination": "/thoughts.html", "permanent": true }
   ]
 }
